@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-//
+// 
 // Copyright (c) 2020, bodand
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,18 +32,56 @@
 // Created by bodand on 2020-05-15.
 //
 
-#pragma once
+#include <catch2/catch.hpp>
 
-// info::utils
-#include <info/_macros.hpp>
+// test'd
+#include <info/cli/val_callback.hpp>
+using namespace info::cli::impl;
 
-// project
-#include "cli/option.hpp"
+TEST_CASE("val_callback tests", "[val_callback][impl]") {
+    SECTION("val_callback construction does not modify anything") {
+        int i = 42;
 
-namespace info::cli {
-  INFO_CONSTINIT const static struct {
-      int major = 0;
-      int minor = 1;
-      int patch = 0;
-  } Version;
+        auto f = val_callback{i};
+        (void)f;
+
+        CHECK(i == 42);
+    }
+
+    SECTION("call to val_callback changes value") {
+        int i = 42;
+        auto f = val_callback{i};
+
+        f(46);
+
+        CHECK(i == 46);
+    }
+
+    SECTION("call to val_callback can be made with any assignable type") {
+        int i = 42;
+        auto f = val_callback{i};
+
+        f(46.5f);
+
+        CHECK(i == 46);
+    }
+
+    SECTION("call to val_callback is noexcept when possible") {
+        int i = 42;
+        auto fun = val_callback{i};
+
+        CHECK(noexcept(fun(2)));
+    }
+
+    SECTION("call to val_callback isn't noexcept when not possible") {
+        struct foo {
+            foo& operator=(foo) {
+                return *this;
+            }
+        };
+        foo f1, f2;
+        auto fun = val_callback{f1};
+
+        CHECK_FALSE(noexcept(fun(f2)));
+    }
 }

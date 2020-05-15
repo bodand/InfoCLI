@@ -51,24 +51,13 @@ set(${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS
     pedantic # -Wpedantic != -pedantic, right?
     no-unknown-pragmas no-unused-macros no-nullability-extension
     no-c++20-extensions # we make sure not to use it if we can't
+    no-gnu-string-literal-operator-template # if I want extensions I use extensions, also fuck MSVC
     # Additions from GCC
     suggest-attribute=pure suggest-attribute=const suggest-attribute=cold suggest-final-types
     suggest-final-methods duplicated-branches trampolines placement-new=2 redundant-decls logical-op
     # User requested
     ${INFO_ADDITIONAL_WARNINGS} # todo document this
     )
-
-if (MSVC)
-    set(${INFO_PROJECT_NAME}_WARNINGS ${${INFO_PROJECT_NAME}_WARNINGS}
-        /wd4068 # Unknown pragma warnings
-        /wd4514 /wd4710 # These warn for the Windows stdlib
-        /permissive- # cause of course you have to *disable* permissive
-        )
-
-    # Do not have /Wall and /Wextra for MSVC
-    list(POP_FRONT ${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS ${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS)
-    list(POP_FRONT ${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS ${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS)
-endif ()
 
 # -pedantic check
 check_cxx_compiler_flag(-pedantic HAS_RAW_PEDANTIC)

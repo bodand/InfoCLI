@@ -28,6 +28,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+if (MSVC)
+    message(FATAL_ERROR "MSVC is not supported. Be a better person and use Clang or GCC. Thank you.")
+endif ()
+
 ## CMake shenanigans
 cmake_minimum_required(VERSION 3.14)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -41,13 +45,6 @@ else ()
 endif ()
 
 option(INFO_CLI_BUILD_TESTS "Build the the InfoCLI test suite [Off as dependency]" ${INFO_CLI_MAIN})
-#option(INFO_CLI_BUILD_SHARED "Build InfoCLI as a shared object [On]" On)
-#
-#if (INFO_CLI_BUILD_SHARED)
-#    set(INFO_CLI_BUILD_TYPE SHARED)
-#else ()
-#    set(INFO_CLI_BUILD_TYPE STATIC)
-#endif ()
 
 ## Project
 project(InfoCLI

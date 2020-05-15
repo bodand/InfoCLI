@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-//
+// 
 // Copyright (c) 2020, bodand
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,16 +34,32 @@
 
 #pragma once
 
-// info::utils
-#include <info/_macros.hpp>
-
 // project
-#include "cli/option.hpp"
+#include "tlist.hpp"
 
-namespace info::cli {
-  INFO_CONSTINIT const static struct {
-      int major = 0;
-      int minor = 1;
-      int patch = 0;
-  } Version;
+namespace info::cli::impl {
+  template<class T>
+  struct val_callback {
+      template<class U>
+      void operator()(U&& val)
+      noexcept(std::is_nothrow_assignable_v<T&, U>) {
+          static_assert(std::is_assignable_v<T&, U>,
+                        "Given type is not assignable to the required type");
+
+          _ref = std::forward<U>(val);
+      }
+
+      template<class U>
+      bool operator==(const val_callback<U>& cb) const {
+          if constexpr (std::is_same_v<T, U>) {
+              return &_ref == &cb._ref;
+          }
+          return false;
+      }
+
+      explicit val_callback(T& ref)
+             : _ref{ref} {}
+  private:
+      T& _ref;
+  };
 }

@@ -37,7 +37,8 @@ enable_testing()
 
 add_executable(cli_test
                test.main.cpp
-               )
+               test.dissector.cpp
+               test.val_callback.cpp test.option.cpp type_equality.hpp)
 
 target_link_libraries(cli_test
                       info::cli

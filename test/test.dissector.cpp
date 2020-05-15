@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-//
+// 
 // Copyright (c) 2020, bodand
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,18 +32,72 @@
 // Created by bodand on 2020-05-15.
 //
 
-#pragma once
-
-// info::utils
-#include <info/_macros.hpp>
+#include <catch2/catch.hpp>
 
 // project
-#include "cli/option.hpp"
+#include "type_equality.hpp"
 
-namespace info::cli {
-  INFO_CONSTINIT const static struct {
-      int major = 0;
-      int minor = 1;
-      int patch = 0;
-  } Version;
+// test'd
+#include <info/cli/dissector.hpp>
+using namespace info::cli::impl;
+
+void fun(int) {}
+
+TEST_CASE("is_callback tests", "[is_callback][impl][meta]") {
+
+    SECTION("is_callback returns false for non-callable types") {
+        struct foo {
+        };
+
+        CHECK_FALSE(is_callback<int>);
+        CHECK_FALSE(is_callback<foo>);
+    }
+
+    SECTION("is_callback returns true for function types") {
+        CHECK(is_callback<decltype(fun)>);
+    }
+
+    SECTION("is_callback returns true for functor types") {
+        struct foo {
+            void operator()(int) {}
+        };
+
+        CHECK(is_callback<foo>);
+    }
+
+    SECTION("is_callback returns true for lambdas") {
+        auto lambda = [](int) {};
+        CHECK(is_callback<decltype(lambda)>);
+    }
+
+    SECTION("is_callback returns false for generic lambdas") {
+        auto lambda = [](auto) {};
+        CHECK_FALSE(is_callback<decltype(lambda)>);
+    }
+}
+
+TEST_CASE("dissector tests", "[dissector][impl][meta]") {
+    struct nullary {
+        void operator()() {}
+    };
+
+    struct unary {
+        void operator()(int) {}
+    };
+
+    struct binary {
+        void operator()(int, int) {}
+    };
+
+    SECTION("dissector returns empty list correctly") {
+        CHECK(type_c<dissect<nullary>> == type_c<tlist<>>);
+    }
+
+    SECTION("dissector returns one element list correctly") {
+        CHECK(type_c<dissect<unary>> == type_c<tlist<int>>);
+    }
+
+    SECTION("dissector returns multi-element list correctly") {
+        CHECK(type_c<dissect<binary>> == type_c<tlist<int, int>>);
+    }
 }
