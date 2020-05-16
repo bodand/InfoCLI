@@ -29,30 +29,62 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //
-// Created by bodand on 2020-05-15.
+// Created by bodand on 2020-05-16.
 //
 
 #pragma once
 
-// info::utils
-#include <info/_macros.hpp>
-
-namespace info::cli::impl {
+namespace info::cli::meta {
   template<class... Args>
-  struct tlist;
-
-  template<class T, class... Args>
-  struct tlist<T, Args...> {
-      INFO_CONSTINIT const static auto size = 1 + sizeof...(Args);
-
-      using head = T;
-      using tail = tlist<Args...>;
+  struct tlist {
   };
 
-  template<>
-  struct tlist<> {
-      INFO_CONSTINIT const static auto size = 0;
-
-      using tail = tlist<>;
+  template<auto V>
+  struct cval {
+      constexpr const static auto value = V;
   };
+
+  // size ---------------------------------------------------------------------
+  template<class>
+  struct size_;
+
+  template<
+         template<class...> class L, class... Args
+  >
+  struct size_<L<Args...>> {
+      using type = cval<sizeof...(Args)>;
+  };
+
+  template<class T>
+  using size = typename size_<T>::type;
+
+  // head ---------------------------------------------------------------------
+  template<class>
+  struct head_;
+
+  template<
+         template<class...> class L, class T, class... Args
+  >
+  struct head_<L<T, Args...>> {
+      using type = T;
+  };
+
+  template<class T>
+  using head = typename head_<T>::type;
+
+  // nest ---------------------------------------------------------------------
+  template<class, template<class, class> class>
+  struct nest_;
+
+  template<
+         template<class, class> class T,
+         template<class, class, class> class L,
+         class Args1, class Args2, class Args3
+  > // I don't think this needs to be universal
+  struct nest_<L<Args1, Args2, Args3>, T> {
+      using type = T<Args1, T<Args2, Args3>>;
+  };
+
+  template<class L, template<class, class> class T>
+  using nest = typename nest_<L, T>::type;
 }

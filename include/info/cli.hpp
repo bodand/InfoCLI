@@ -40,9 +40,10 @@
 // project
 #include "cli/type_parser.hpp"
 #include "cli/dissector.hpp"
-#include "cli/tlist.hpp"
+#include "cli/meta.hpp"
 #include "cli/val_callback.hpp"
 #include "cli/option.hpp"
+#include "cli/matcher.hpp"
 
 namespace info::cli {
   INFO_CONSTINIT const static struct {

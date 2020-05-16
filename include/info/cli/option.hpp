@@ -43,6 +43,7 @@
 #include <boost/hana/map.hpp>
 
 // project
+#include "meta.hpp"
 #include "dissector.hpp"
 #include "matcher.hpp"
 #include "val_callback.hpp"
@@ -87,14 +88,14 @@ namespace info::cli {
       // hence we also do manual formatting
       INFO_CONSTEVAL auto operator->*(Fun&& fun) const {
           using PassType = impl::dissect<std::remove_reference_t<Fun>>;
-          static_assert(PassType::size == 1,
+          static_assert(meta::size<PassType>::value == 1,
                         "The arity of the passed callback is not 1");
 
           return boost::hana::make_tuple(
                  impl::matcher(boost::hana::string_c<str...>),
                  std::forward<Fun>(fun),
                  boost::hana::type_c<
-                        typename PassType::head
+                        meta::head<PassType>
                  >
           );
       }

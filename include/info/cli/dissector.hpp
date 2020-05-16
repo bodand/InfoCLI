@@ -41,7 +41,7 @@
 #include <info/_macros.hpp>
 
 // project
-#include "tlist.hpp"
+#include "meta.hpp"
 
 namespace info::cli::impl {
   template<class, bool>
@@ -59,12 +59,12 @@ namespace info::cli::impl {
       INFO_CONSTINIT const static auto ptr = &F::operator();
 
       template<class R, class C, class... ArgsT>
-      static constexpr tlist<ArgsT...> dis(R (C::* )(ArgsT...)) {
+      static constexpr meta::tlist<ArgsT...> dis(R (C::* )(ArgsT...)) {
           return {};
       }
 
       template<class R, class C, class... ArgsT>
-      static constexpr tlist<ArgsT...> dis(R (C::* )(ArgsT...) const) {
+      static constexpr meta::tlist<ArgsT...> dis(R (C::* )(ArgsT...) const) {
           return {};
       }
 
@@ -73,7 +73,7 @@ namespace info::cli::impl {
 
   template<class R, class... Args>
   struct dissector<R(Args...), true> : std::true_type {
-      using type = tlist<Args...>;
+      using type = meta::tlist<Args...>;
   };
 
   template<class T>

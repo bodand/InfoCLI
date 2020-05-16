@@ -40,6 +40,7 @@
 // test'd
 #include <info/cli/dissector.hpp>
 using namespace info::cli::impl;
+using namespace info::cli::meta;
 
 void fun(int) {}
 
