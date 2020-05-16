@@ -69,12 +69,12 @@ TEST_CASE("option test cases", "[option][api]") {
         int i = 5;
         auto matcher = "int"_opt->*i;
         auto tuple = hana::make_tuple(
-               hana::string_c<'i', 'n', 't'>,
+               impl::matcher(hana::string_c<'i', 'n', 't'>),
                impl::val_callback<int>{i},
                hana::type_c<int>
         );
 
-        CHECK(std::string_view{matcher[0_c].c_str()} == tuple[0_c].c_str());
+        CHECK(matcher[0_c] == tuple[0_c]);
         CHECK(matcher[1_c] == tuple[1_c]);
         // ^ two val_callbacks compare equal if they share the same ref
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
@@ -94,12 +94,12 @@ TEST_CASE("option test cases", "[option][api]") {
         auto fun = func{42};
         auto matcher = "int"_opt->*fun;
         auto tuple = hana::make_tuple(
-               hana::string_c<'i', 'n', 't'>,
+               impl::matcher(hana::string_c<'i', 'n', 't'>),
                func{42},
                hana::type_c<int>
         );
 
-        CHECK(std::string_view{matcher[0_c].c_str()} == tuple[0_c].c_str());
+        CHECK(matcher[0_c] == tuple[0_c]);
         CHECK(matcher[1_c] == tuple[1_c]);
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
     }
@@ -109,12 +109,12 @@ TEST_CASE("option test cases", "[option][api]") {
 
         auto matcher = "int"_opt->*fun;
         auto tuple = hana::make_tuple(
-               hana::string_c<'i', 'n', 't'>,
+               impl::matcher(hana::string_c<'i', 'n', 't'>),
                gen_func{42},
                hana::type_c<std::string_view>
         );
 
-        CHECK(std::string_view{matcher[0_c].c_str()} == tuple[0_c].c_str());
+        CHECK(matcher[0_c] == tuple[0_c]);
         CHECK(matcher[1_c] == tuple[1_c]);
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
     }

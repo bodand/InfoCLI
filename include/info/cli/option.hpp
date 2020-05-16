@@ -44,6 +44,7 @@
 
 // project
 #include "dissector.hpp"
+#include "matcher.hpp"
 #include "val_callback.hpp"
 
 namespace info::cli {
@@ -61,31 +62,27 @@ namespace info::cli {
 
   template<class CharT, CharT... str>
   struct option_str {
-      //&!off
       template<class T,
              typename = std::enable_if_t<
                     !impl::is_typed_callback<T>
                     && !std::is_invocable_v<T, std::string_view>
              >
       >
-      //&!on
       // variable callbacks with a bare reference
       INFO_CONSTEVAL auto operator->*(T& ref) const {
           return boost::hana::make_tuple(
-                 boost::hana::string_c<str...>,
-                 impl::val_callback < T > {ref},
+                 impl::matcher(boost::hana::string_c<str...>),
+                 impl::val_callback<T>{ref},
                  boost::hana::type_c<T>
           );
       }
 
-      //&!off
       template<class Fun,
              typename = std::enable_if_t<
                     impl::is_typed_callback<std::remove_reference_t<Fun>>
                     && !std::is_invocable_v<Fun, std::string_view>
              >
       >
-      //&!on
       // functor callback with a specified callback-type != string_view
       // hence we also do manual formatting
       INFO_CONSTEVAL auto operator->*(Fun&& fun) const {
@@ -94,7 +91,7 @@ namespace info::cli {
                         "The arity of the passed callback is not 1");
 
           return boost::hana::make_tuple(
-                 boost::hana::string_c<str...>,
+                 impl::matcher(boost::hana::string_c<str...>),
                  std::forward<Fun>(fun),
                  boost::hana::type_c<
                         typename PassType::head
@@ -102,15 +99,13 @@ namespace info::cli {
           );
       }
 
-      //&!off
       template<class Fun,
-               typename = std::enable_if_t<
-                   !impl::is_typed_callback<Fun>
-                   && std::is_invocable_v<Fun, std::string_view>
-               >,
-               typename = int // just to create overloads and not a redefinition
+             typename = std::enable_if_t<
+                    !impl::is_typed_callback<Fun>
+                    && std::is_invocable_v<Fun, std::string_view>
+             >,
+             typename = int // just to create overloads and not a redefinition
       >
-      //&!on
       // generic functors => we can't perform manual formatting; or
       // string requesting functors => we needn't perform any formatting
       // hence we just pass the applicable string
@@ -119,7 +114,7 @@ namespace info::cli {
                         "Passed generic lambdas must be callable with std::string_view");
 
           return boost::hana::make_tuple(
-                 boost::hana::string_c<str...>,
+                 impl::matcher(boost::hana::string_c<str...>),
                  std::forward<Fun>(fun),
                  boost::hana::type_c<std::string_view>
           );

@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-// 
+//
 // Copyright (c) 2020, bodand
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -50,6 +50,14 @@
 // project
 #include "split.hpp"
 
+#ifndef INFO_CLI_SHORT_OPT_DASH // todo document this
+#  define INFO_CLI_SHORT_OPT_DASH "-"
+#endif
+
+#ifndef INFO_CLI_LONG_OPT_DASH // todo document this
+#  define INFO_CLI_LONG_OPT_DASH "--"
+#endif
+
 namespace info::cli::impl {
   namespace hana = boost::hana;
 
@@ -60,13 +68,13 @@ namespace info::cli::impl {
                  split(str),
                  [](auto x) {
                    if (hana::length(x) == hana::size_c<1>) {
-                       return (hana::string_c<'-'> + x).c_str();
+                       return std::string{INFO_CLI_SHORT_OPT_DASH} + x.c_str();
                    }
-                   return (hana::string_c<'-', '-'> + x).c_str();
+                   return std::string{INFO_CLI_LONG_OPT_DASH} + x.c_str();
                  }
           );
-          hana::for_each(matchers, [this](auto x) {
-            _matchers.emplace(x);
+          hana::for_each(matchers, [this](auto&& x) {
+            _matchers.emplace(std::move(x));
           });
       }
 
@@ -78,4 +86,23 @@ namespace info::cli::impl {
       std::unordered_set<std::string> _matchers{};
   };
 
+  template<class T, class U>
+  INFO_CONSTEVAL std::false_type operator==(const matcher<T>&, const matcher<U>&) {
+      return {};
+  }
+
+  template<class T>
+  INFO_CONSTEVAL std::true_type operator==(const matcher<T>&, const matcher<T>&) {
+      return {};
+  }
+
+  template<class T, class U>
+  INFO_CONSTEVAL std::true_type operator!=(const matcher<T>&, const matcher<U>&) {
+      return {};
+  }
+
+  template<class T>
+  INFO_CONSTEVAL std::false_type operator!=(const matcher<T>&, const matcher<T>&) {
+      return {};
+  }
 }
