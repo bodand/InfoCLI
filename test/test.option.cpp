@@ -34,7 +34,11 @@
 
 #include <catch2/catch.hpp>
 
+// stdlib
+#include <iostream>
+
 // Boost.Hana
+#define BOOST_HANA_CONFIG_ENABLE_STRING_UDL
 #include <boost/hana.hpp>
 using namespace boost;
 using namespace hana::literals;
@@ -65,23 +69,26 @@ TEST_CASE("option test cases", "[option][api]") {
         CHECK(type_c<decltype(opt)> == type_c<decltype(opt2)>);
     }
 
-    SECTION("option creates expected tuple with reference") {
-        int i = 5;
-        auto matcher = "int"_opt->*i;
-        auto tuple = hana::make_tuple(
-               impl::matcher(hana::string_c<'i', 'n', 't'>),
-               int{},
-               hana::type_c<int>
-        );
+    SECTION("_opt udl creates map with expected keys") {
+        int i = 42;
+        auto matcher = "int|i"_opt->*i;
 
-        CHECK(matcher[0_c] == tuple[0_c]);
-        // for 1th index:
-        //  can't check lambda type anyhow here, because it's completely hidden
-        //  behind everything
-        CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
+        CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<2>>);
+        CHECK(type_c<decltype(hana::keys(matcher))> == type_c<hana::basic_tuple<decltype("--int"_s), decltype("-i"_s)>>);
+        CHECK(std::is_invocable_v<decltype(hana::second(matcher["--int"_s])), int>);
+        CHECK(std::is_invocable_v<decltype(hana::second(matcher["-i"_s])), int>);
     }
 
-    SECTION("option creates expected tuple with typed functor") {
+    SECTION("option creates expected map with reference") {
+        int i = 5;
+        auto matcher = "int"_opt->*i;
+
+        CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
+        CHECK(type_c<decltype(hana::keys(matcher))> == type_c<hana::basic_tuple<decltype("--int"_s)>>);
+        CHECK(std::is_invocable_v<decltype(hana::second(matcher["--int"_s])), int>);
+    }
+
+    SECTION("option creates expected map with typed functor") {
         struct func {
             void operator()(int) {}
 
@@ -94,35 +101,23 @@ TEST_CASE("option test cases", "[option][api]") {
 
         auto fun = func{42};
         auto matcher = "int"_opt->*fun;
-        auto tuple = hana::make_tuple(
-               impl::matcher(hana::string_c<'i', 'n', 't'>),
-               func{42},
-               hana::type_c<int>
-        );
-
-        CHECK(matcher[0_c] == tuple[0_c]);
-        CHECK(type_c<decltype(matcher[1_c])> == type_c<decltype(tuple[1_c])>);
-        CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
+        CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
+        CHECK(type_c<decltype(hana::keys(matcher))> == type_c<hana::basic_tuple<decltype("--int"_s)>>);
+        CHECK(std::is_invocable_v<decltype(hana::second(matcher["--int"_s])), int>);
     }
 
-    SECTION("options creates expected tuple with generic-lambda-style functor") {
+    SECTION("options creates expected map with generic-lambda-style functor") {
         auto fun = gen_func{42};
 
         auto matcher = "int"_opt->*fun;
-        auto tuple = hana::make_tuple(
-               impl::matcher(hana::string_c<'i', 'n', 't'>),
-               gen_func{42},
-               hana::type_c<std::string_view>
-        );
-
-        CHECK(matcher[0_c] == tuple[0_c]);
-        CHECK(type_c<decltype(matcher[1_c])> == type_c<decltype(tuple[1_c])>);
-        CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
+        CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
+        CHECK(type_c<decltype(hana::keys(matcher))> == type_c<hana::basic_tuple<decltype("--int"_s)>>);
+        CHECK(std::is_invocable_v<decltype(hana::second(matcher["--int"_s])), std::string_view>);
     }
 
     SECTION("option creates their help appropriately") {
         auto matcher = "int"_opt["help string"]->*[](int) {};
-        (void)matcher;
+        (void) matcher;
 
         CHECK(help<hana::string<'i', 'n', 't'>>.msg == "help string");
     }

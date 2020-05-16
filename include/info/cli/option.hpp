@@ -41,11 +41,17 @@
 #include <boost/hana/tuple.hpp>
 #include <boost/hana/string.hpp>
 #include <boost/hana/map.hpp>
+#include <boost/hana/functional/compose.hpp>
+#include <boost/hana/equal.hpp>
+#include <boost/hana/integral_constant.hpp>
+#include <boost/hana/length.hpp>
+#include <boost/hana/not.hpp>
+#include <boost/hana/filter.hpp>
 
 // project
 #include "meta.hpp"
 #include "dissector.hpp"
-#include "matcher.hpp"
+#include "split.hpp"
 
 namespace info::cli {
   template<class T>
@@ -60,8 +66,39 @@ namespace info::cli {
   template<class T>
   INFO_CONSTINIT static help_t<T> help;
 
-  template<class CharT, CharT... str>
-  struct option_str {
+  template<class CharT, CharT... cs>
+  class option_str {
+      template<class S>
+      using add_short_dash = decltype(boost::hana::string_c<'-'> + S{});
+      template<class S>
+      using add_long_dash = decltype(boost::hana::string_c<'-', '-'> + S{});
+
+      template<class S>
+      using len1 = std::integral_constant<bool, meta::csize<S>::value == 1>;
+      template<class S>
+      using not_len1 = std::integral_constant<bool, meta::csize<S>::value != 1>;
+
+      constexpr static auto strs = meta::map_if<
+             meta::map_if<
+                    decltype(impl::split(boost::hana::string_c<cs...>)),
+                    not_len1,
+                    add_long_dash
+             >,
+             len1,
+             add_short_dash
+      >{};
+
+      template<class T, class Action, class... Strs>
+      constexpr static auto mk_matcher(Action act, boost::hana::tuple<Strs...>) {
+          return boost::hana::make_tuple(
+                 boost::hana::make_pair(
+                        Strs{},
+                        boost::hana::make_pair(boost::hana::type_c<T>, act)
+                 )...
+          );
+      }
+
+  public:
       template<class T,
              typename = std::enable_if_t<
                     !impl::is_typed_callback<T>
@@ -70,13 +107,11 @@ namespace info::cli {
       >
       // variable callbacks with a bare reference
       INFO_CONSTEVAL auto operator->*(T& ref) const {
-          return boost::hana::make_tuple(
-                 impl::matcher(boost::hana::string_c<str...>),
-                 [&ref](const T& arg) {
-                     ref = arg;
-                 },
-                 boost::hana::type_c<T>
-          );
+          auto action = [&ref](const T& val) {
+            ref = val;
+          };
+
+          return mk_matcher<T>(action, strs);
       }
 
       template<class Fun,
@@ -92,13 +127,7 @@ namespace info::cli {
           static_assert(meta::size<PassType>::value == 1,
                         "The arity of the passed callback is not 1");
 
-          return boost::hana::make_tuple(
-                 impl::matcher(boost::hana::string_c<str...>),
-                 std::forward<Fun>(fun),
-                 boost::hana::type_c<
-                        meta::head<PassType>
-                 >
-          );
+          return mk_matcher<meta::head<PassType>>(std::forward<Fun>(fun), strs);
       }
 
       template<class Fun,
@@ -111,25 +140,21 @@ namespace info::cli {
       // generic functors => we can't perform manual formatting; or
       // string requesting functors => we needn't perform any formatting
       // hence we just pass the applicable string
-      INFO_CONSTEVAL auto operator->*(Fun&& fun) const {
+      INFO_CONSTEVAL auto operator->*(Fun fun) const {
           static_assert(std::is_invocable_v<Fun, std::string_view>,
-                        "Passed generic lambdas must be callable with std::string_view");
+                        "Passed functors must be callable with std::string_view");
 
-          return boost::hana::make_tuple(
-                 impl::matcher(boost::hana::string_c<str...>),
-                 std::forward<Fun>(fun),
-                 boost::hana::type_c<std::string_view>
-          );
+          return mk_matcher<std::string_view>(std::forward<Fun>(fun), strs);
       }
 
       INFO_CONSTEVAL auto operator[](std::string_view txt) const {
-          help<boost::hana::string<str...>>(txt);
+          help<boost::hana::string<cs...>>(txt);
           return *this;
       }
   };
 
-  template<class CharT, CharT... cs>
-  constexpr option_str<CharT, cs...> operator ""_opt() {
+  template<class CharT, CharT... c>
+  constexpr option_str<CharT, c...> operator ""_opt() {
       return {};
   }
 }

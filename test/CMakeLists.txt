@@ -40,7 +40,7 @@ add_executable(cli_test
                test.dissector.cpp
                test.option.cpp
                test.split.cpp
-               test.matcher.cpp)
+               test.cli_parser.cpp)
 
 target_link_libraries(cli_test
                       info::cli
