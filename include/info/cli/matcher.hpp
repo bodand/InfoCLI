@@ -43,6 +43,7 @@
 #include <boost/hana/transform.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/plus.hpp>
+#include <boost/hana/hash.hpp>
 
 // info::utils
 #include <info/_macros.hpp>
@@ -63,6 +64,11 @@ namespace info::cli::impl {
 
   template<class Str>
   struct matcher {
+      constexpr const static auto string = Str{};
+      
+      constexpr matcher()
+             : matcher(Str{}) {}
+
       constexpr explicit matcher(Str str) {
           auto matchers = hana::transform(
                  split(str),

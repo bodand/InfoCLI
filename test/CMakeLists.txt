@@ -38,7 +38,6 @@ enable_testing()
 add_executable(cli_test
                test.main.cpp
                test.dissector.cpp
-               test.val_callback.cpp
                test.option.cpp
                test.split.cpp
                test.matcher.cpp)

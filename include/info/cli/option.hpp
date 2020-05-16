@@ -46,7 +46,6 @@
 #include "meta.hpp"
 #include "dissector.hpp"
 #include "matcher.hpp"
-#include "val_callback.hpp"
 
 namespace info::cli {
   template<class T>
@@ -73,7 +72,9 @@ namespace info::cli {
       INFO_CONSTEVAL auto operator->*(T& ref) const {
           return boost::hana::make_tuple(
                  impl::matcher(boost::hana::string_c<str...>),
-                 impl::val_callback<T>{ref},
+                 [&ref](const T& arg) {
+                     ref = arg;
+                 },
                  boost::hana::type_c<T>
           );
       }

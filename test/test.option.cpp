@@ -70,13 +70,14 @@ TEST_CASE("option test cases", "[option][api]") {
         auto matcher = "int"_opt->*i;
         auto tuple = hana::make_tuple(
                impl::matcher(hana::string_c<'i', 'n', 't'>),
-               impl::val_callback<int>{i},
+               int{},
                hana::type_c<int>
         );
 
         CHECK(matcher[0_c] == tuple[0_c]);
-        CHECK(matcher[1_c] == tuple[1_c]);
-        // ^ two val_callbacks compare equal if they share the same ref
+        // for 1th index:
+        //  can't check lambda type anyhow here, because it's completely hidden
+        //  behind everything
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
     }
 
@@ -100,7 +101,7 @@ TEST_CASE("option test cases", "[option][api]") {
         );
 
         CHECK(matcher[0_c] == tuple[0_c]);
-        CHECK(matcher[1_c] == tuple[1_c]);
+        CHECK(type_c<decltype(matcher[1_c])> == type_c<decltype(tuple[1_c])>);
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
     }
 
@@ -115,7 +116,7 @@ TEST_CASE("option test cases", "[option][api]") {
         );
 
         CHECK(matcher[0_c] == tuple[0_c]);
-        CHECK(matcher[1_c] == tuple[1_c]);
+        CHECK(type_c<decltype(matcher[1_c])> == type_c<decltype(tuple[1_c])>);
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
     }
 
