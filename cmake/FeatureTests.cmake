@@ -36,6 +36,13 @@ function(CheckWarningFlag isName)
     set("HAS_WARNING_${isName}" ${HasWarning_${isName}} PARENT_SCOPE)
 endfunction()
 
+
+if (INFO_CLI_MAIN)
+    list(APPEND INFO_ADDITIONAL_WARNINGS pedantic) # -Wpedantic
+else ()
+    list(APPEND INFO_ADDITIONAL_WARNINGS no-gnu-string-literal-operator-template)
+endif ()
+
 # Possible warnings to check for
 set(${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS
     # Originating from Clang
@@ -48,7 +55,6 @@ set(${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS
     undefined-internal-type undefined-reinterpret-cast unneeded-internal-declaration
     unreachable-code-aggressive unreachable-code-loop-increment unused-const-variable
     unused-exception-parameter unused-parameter unused-template unused-variable nullability-completeness
-    pedantic # -Wpedantic != -pedantic, right?
     no-unknown-pragmas no-unused-macros no-nullability-extension
     no-c++20-extensions # we make sure not to use it if we can't
     # Additions from GCC
