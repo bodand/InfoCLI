@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-// 
+//
 // Copyright (c) 2020, bodand
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -43,18 +43,18 @@ using namespace info::cli::impl;
 
 void fun(int) {}
 
-TEST_CASE("is_callback tests", "[is_callback][impl][meta]") {
+TEST_CASE("is_typed_callback tests", "[is_callback][impl][meta]") {
 
     SECTION("is_callback returns false for non-callable types") {
         struct foo {
         };
 
-        CHECK_FALSE(is_callback<int>);
-        CHECK_FALSE(is_callback<foo>);
+        CHECK_FALSE(is_typed_callback<int>);
+        CHECK_FALSE(is_typed_callback<foo>);
     }
 
     SECTION("is_callback returns true for function types") {
-        CHECK(is_callback<decltype(fun)>);
+        CHECK(is_typed_callback<decltype(fun)>);
     }
 
     SECTION("is_callback returns true for functor types") {
@@ -62,17 +62,17 @@ TEST_CASE("is_callback tests", "[is_callback][impl][meta]") {
             void operator()(int) {}
         };
 
-        CHECK(is_callback<foo>);
+        CHECK(is_typed_callback<foo>);
     }
 
     SECTION("is_callback returns true for lambdas") {
         auto lambda = [](int) {};
-        CHECK(is_callback<decltype(lambda)>);
+        CHECK(is_typed_callback<decltype(lambda)>);
     }
 
     SECTION("is_callback returns false for generic lambdas") {
         auto lambda = [](auto) {};
-        CHECK_FALSE(is_callback<decltype(lambda)>);
+        CHECK_FALSE(is_typed_callback<decltype(lambda)>);
     }
 }
 

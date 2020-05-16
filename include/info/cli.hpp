@@ -38,6 +38,9 @@
 #include <info/_macros.hpp>
 
 // project
+#include "cli/dissector.hpp"
+#include "cli/tlist.hpp"
+#include "cli/val_callback.hpp"
 #include "cli/option.hpp"
 
 namespace info::cli {

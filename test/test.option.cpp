@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-// 
+//
 // Copyright (c) 2020, bodand
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -117,5 +117,12 @@ TEST_CASE("option test cases", "[option][api]") {
         CHECK(std::string_view{matcher[0_c].c_str()} == tuple[0_c].c_str());
         CHECK(matcher[1_c] == tuple[1_c]);
         CHECK(type_c<decltype(matcher[2_c])> == type_c<decltype(tuple[2_c])>);
+    }
+
+    SECTION("option creates their help appropriately") {
+        auto matcher = "int"_opt["help string"]->*[](int) {};
+        (void)matcher;
+
+        CHECK(help<hana::string<'i', 'n', 't'>>.msg == "help string");
     }
 }

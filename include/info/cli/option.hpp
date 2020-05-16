@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-// 
+//
 // Copyright (c) 2020, bodand
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -40,38 +40,55 @@
 // Boost.Hana
 #include <boost/hana/tuple.hpp>
 #include <boost/hana/string.hpp>
+#include <boost/hana/map.hpp>
 
 // project
 #include "dissector.hpp"
 #include "val_callback.hpp"
 
 namespace info::cli {
+  template<class T>
+  struct help_t {
+      constexpr void operator()(std::string_view txt) const {
+          msg = txt;
+      }
+
+      mutable std::string_view msg;
+  };
+
+  template<class T>
+  INFO_CONSTINIT static help_t<T> help;
+
   template<class CharT, CharT... str>
   struct option_str {
+      //&!off
       template<class T,
              typename = std::enable_if_t<
-                    !impl::is_callback<T>
+                    !impl::is_typed_callback<T>
                     && !std::is_invocable_v<T, std::string_view>
              >
       >
+      //&!on
       // variable callbacks with a bare reference
-      INFO_CONSTEVAL auto operator->*(T& ref) {
+      INFO_CONSTEVAL auto operator->*(T& ref) const {
           return boost::hana::make_tuple(
                  boost::hana::string_c<str...>,
-                 impl::val_callback<T>{ref},
+                 impl::val_callback < T > {ref},
                  boost::hana::type_c<T>
           );
       }
 
+      //&!off
       template<class Fun,
              typename = std::enable_if_t<
-                    impl::is_callback<std::remove_reference_t<Fun>>
+                    impl::is_typed_callback<std::remove_reference_t<Fun>>
                     && !std::is_invocable_v<Fun, std::string_view>
              >
       >
+      //&!on
       // functor callback with a specified callback-type != string_view
       // hence we also do manual formatting
-      INFO_CONSTEVAL auto operator->*(Fun&& fun) {
+      INFO_CONSTEVAL auto operator->*(Fun&& fun) const {
           using PassType = impl::dissect<std::remove_reference_t<Fun>>;
           static_assert(PassType::size == 1,
                         "The arity of the passed callback is not 1");
@@ -85,17 +102,19 @@ namespace info::cli {
           );
       }
 
+      //&!off
       template<class Fun,
-             typename = std::enable_if_t<
-                    !impl::is_callback<Fun>
-                    && std::is_invocable_v<Fun, std::string_view>
-             >,
-             typename = int
+               typename = std::enable_if_t<
+                   !impl::is_typed_callback<Fun>
+                   && std::is_invocable_v<Fun, std::string_view>
+               >,
+               typename = int // just to create overloads and not a redefinition
       >
+      //&!on
       // generic functors => we can't perform manual formatting; or
       // string requesting functors => we needn't perform any formatting
       // hence we just pass the applicable string
-      INFO_CONSTEVAL auto operator->*(Fun&& fun) {
+      INFO_CONSTEVAL auto operator->*(Fun&& fun) const {
           static_assert(std::is_invocable_v<Fun, std::string_view>,
                         "Passed generic lambdas must be callable with std::string_view");
 
@@ -104,6 +123,11 @@ namespace info::cli {
                  std::forward<Fun>(fun),
                  boost::hana::type_c<std::string_view>
           );
+      }
+
+      INFO_CONSTEVAL auto operator[](std::string_view txt) const {
+          help<boost::hana::string<str...>>(txt);
+          return *this;
       }
   };
 
