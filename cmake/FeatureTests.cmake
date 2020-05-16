@@ -51,7 +51,6 @@ set(${INFO_PROJECT_NAME}_POSSIBLE_WARNINGS
     pedantic # -Wpedantic != -pedantic, right?
     no-unknown-pragmas no-unused-macros no-nullability-extension
     no-c++20-extensions # we make sure not to use it if we can't
-    no-gnu-string-literal-operator-template # if I want extensions I use extensions, also fuck MSVC
     # Additions from GCC
     suggest-attribute=pure suggest-attribute=const suggest-attribute=cold suggest-final-types
     suggest-final-methods duplicated-branches trampolines placement-new=2 redundant-decls logical-op
