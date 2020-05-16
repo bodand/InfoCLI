@@ -38,6 +38,7 @@
 #include <info/_macros.hpp>
 
 // project
+#include "cli/type_parser.hpp"
 #include "cli/dissector.hpp"
 #include "cli/tlist.hpp"
 #include "cli/val_callback.hpp"

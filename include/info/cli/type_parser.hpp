@@ -1,0 +1,182 @@
+//// BSD 3-Clause License
+// 
+// Copyright (c) 2020, bodand
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+// 
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+// 
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+// 
+// 3. Neither the name of the copyright holder nor the names of its
+//    contributors may be used to endorse or promote products derived from
+//    this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+//
+// Created by bodand on 2020-05-15.
+//
+
+#pragma once
+
+// stdlib
+#include <string_view>
+#include <sstream>
+#include <charconv>
+#include <cstdlib>
+
+// info::utils
+#include <info/_macros.hpp>
+#include <info/expected.hpp>
+
+// Boost.Hana
+#include <boost/hana/type.hpp>
+
+namespace info::cli {
+  template<class>
+  struct type_parser;
+
+  namespace impl {
+    template<class>
+    struct wrapped_type_parser;
+
+    template<class T>
+    struct wrapped_type_parser<boost::hana::basic_type<T>> : type_parser<T> {
+    };
+  }
+
+  template<class T>
+  struct type_parser {
+      // default - low-performance parser
+      info::expected<T, std::errc>
+      operator()(std::string_view str) {
+          T tmp;
+          std::istringstream ss{str.data()};
+          if (ss >> tmp)
+              return tmp;
+          return INFO_UNEXPECTED{std::errc::invalid_argument};
+      }
+  };
+
+  template<>
+  struct type_parser<std::string> {
+      info::expected<std::string, std::errc>
+      operator()(std::string_view str) {
+          return std::string{str};
+      }
+  };
+
+  template<>
+  struct type_parser<std::string_view> {
+      info::expected<std::string_view, std::errc>
+      operator()(std::string_view str) {
+          return str;
+      }
+  };
+
+#define INTEGRAL_PARSER(T)\
+  template<>\
+  struct type_parser<T> {\
+      info::expected<T, std::errc>\
+      operator()(std::string_view str) const noexcept {\
+          T i;\
+          auto[__, ex] = std::from_chars(\
+                 str.data(),\
+                 str.data() + str.size(),\
+                 i);\
+          if (ex == std::errc{}) {\
+              return i;\
+          }\
+          return INFO_UNEXPECTED{ex};\
+      }\
+  };
+
+  INTEGRAL_PARSER(short)
+
+  INTEGRAL_PARSER(unsigned short)
+
+  INTEGRAL_PARSER(int)
+
+  INTEGRAL_PARSER(unsigned)
+
+  INTEGRAL_PARSER(long)
+
+  INTEGRAL_PARSER(unsigned long)
+
+  INTEGRAL_PARSER(long long)
+
+  INTEGRAL_PARSER(unsigned long long)
+
+#undef INTEGRAL_PARSER
+
+  template<>
+  struct type_parser<char> {
+      info::expected<char, std::errc>
+      operator()(std::string_view str) const noexcept {
+          if (str.size() == 1)
+              return str[0];
+          return INFO_UNEXPECTED{std::errc::invalid_argument};
+      }
+  };
+
+  template<>
+  struct type_parser<unsigned char> {
+      info::expected<unsigned char, std::errc>
+      operator()(std::string_view str) const noexcept {
+          if (str.size() == 1)
+              return static_cast<unsigned char>(str[0]);
+          return INFO_UNEXPECTED{std::errc::invalid_argument};
+      }
+  };
+
+  template<>
+  struct type_parser<float> {
+      info::expected<float, std::errc>
+      operator()(std::string_view str) const noexcept {
+          char* ptr;
+          float val = std::strtof(str.data(), &ptr);
+          if (str.data() == ptr) // couldn't parse shit
+              return INFO_UNEXPECTED{std::errc::invalid_argument};
+          return val;
+      }
+  };
+
+  template<>
+  struct type_parser<double> {
+      info::expected<double, std::errc>
+      operator()(std::string_view str) const noexcept {
+          char* ptr;
+          double val = std::strtod(str.data(), &ptr);
+          if (str.data() == ptr) // couldn't parse shit
+              return INFO_UNEXPECTED{std::errc::invalid_argument};
+          return val;
+      }
+  };
+
+  template<>
+  struct type_parser<long double> {
+      info::expected<long double, std::errc>
+      operator()(std::string_view str) const noexcept {
+          char* ptr;
+          long double val = std::strtold(str.data(), &ptr);
+          if (str.data() == ptr) // couldn't parse shit
+              return INFO_UNEXPECTED{std::errc::invalid_argument};
+          return val;
+      }
+  };
+}
