@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-//
+// 
 // Copyright (c) 2020, bodand
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,53 +35,47 @@
 #include <catch2/catch.hpp>
 
 #include <boost/hana/string.hpp>
-namespace hana = boost::hana;
-using namespace hana::literals;
-
-// project
-#include "type_equality.hpp"
 
 // test'd
-#include <info/cli/split.hpp>
+#include <info/cli/matcher.hpp>
 using namespace info::cli::impl;
 
-TEST_CASE("split test cases", "[split][impl][meta]") {
-    SECTION("split returns empty tuple for empty string") {
-        auto str = BOOST_HANA_STRING("");
-        auto ret = split(str);
+TEST_CASE("matcher test cases", "[matcher][impl]") {
+    SECTION("empty matcher does not match anything") {
+        matcher m{boost::hana::string_c<>};
 
-        CHECK(type_c<decltype(ret)> == type_c<hana::tuple<>>);
+        CHECK_FALSE(m(""));
+        CHECK_FALSE(m("anything"));
+        CHECK_FALSE(m("-anything"));
+        CHECK_FALSE(m("--anything"));
     }
 
-    SECTION("split returns one element tuple for non-splittable string") {
-        auto str = BOOST_HANA_STRING("text");
-        auto ret = split(str);
+    SECTION("one char option matchers match POSIX style opts") {
+        matcher m{BOOST_HANA_STRING("a")};
 
-        CHECK(type_c<std::remove_reference_t<decltype(ret[0_c])>> == type_c<decltype(str)>);
+        CHECK(m("-a"));
+        CHECK_FALSE(m("--a"));
+        CHECK_FALSE(m("a"));
+        CHECK_FALSE(m("-b"));
+        CHECK_FALSE(m("--bingo"));
     }
 
-    SECTION("split splits string with one | in it") {
-        auto str = BOOST_HANA_STRING("te|xt");
-        auto ret = split(str);
-        auto exp = hana::make_tuple(
-               BOOST_HANA_STRING("te"),
-               BOOST_HANA_STRING("xt")
-        );
+    SECTION("multi char option matchers match GNU style opts") {
+        matcher m{BOOST_HANA_STRING("int")};
 
-        CHECK(type_c<decltype(ret)> == type_c<decltype(exp)>);
+        CHECK(m("--int"));
+        CHECK_FALSE(m("-int"));
+        CHECK_FALSE(m("int"));
+        CHECK_FALSE(m("-a"));
+        CHECK_FALSE(m("--asd"));
     }
 
-    SECTION("split splits string with multiple | in it") {
-        auto str = BOOST_HANA_STRING("te|xt|te|xt|t");
-        auto ret = split(str);
-        auto exp = hana::make_tuple(
-               BOOST_HANA_STRING("te"),
-               BOOST_HANA_STRING("xt"),
-               BOOST_HANA_STRING("te"),
-               BOOST_HANA_STRING("xt"),
-               BOOST_HANA_STRING("t")
-        );
+    SECTION("multi-matchers match multiple opts of possibly different styles") {
+        matcher m{BOOST_HANA_STRING("int|i")};
 
-        CHECK(type_c<decltype(ret)> == type_c<decltype(exp)>);
+        CHECK(m("--int"));
+        CHECK(m("-i"));
+        CHECK_FALSE(m("--i"));
+        CHECK_FALSE(m("-int"));
     }
 }
