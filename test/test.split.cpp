@@ -42,27 +42,54 @@ using namespace hana::literals;
 #include "type_equality.hpp"
 
 // test'd
+#include <info/cli/meta_split.hpp>
 #include <info/cli/split.hpp>
 using namespace info::cli::impl;
 
-TEST_CASE("split test cases", "[split][impl][meta]") {
-    SECTION("split returns empty tuple for empty string") {
-        auto str = BOOST_HANA_STRING("");
+TEST_CASE("split test cases", "[split][impl]") {
+    SECTION("split returns correctly split string") {
+        auto str = std::string{"--option=value"};
         auto ret = split(str);
+
+        CHECK(ret[0] == "--option");
+        CHECK(ret[1] == "value");
+    }
+
+    SECTION("split returns empty part if delim is at end") {
+        auto str = std::string{"--option="};
+        auto ret = split(str);
+
+        CHECK(ret[0] == "--option");
+        CHECK(ret[1] == "");
+    }
+
+    SECTION("split returns input string as first ret if delim is not present") {
+        auto str = std::string{"--option"};
+        auto ret = split(str);
+
+        CHECK(ret[0] == "--option");
+        CHECK(ret[1] == "");
+    }
+}
+
+TEST_CASE("meta_split test cases", "[meta_split][impl][meta]") {
+    SECTION("meta_split returns empty tuple for empty string") {
+        auto str = BOOST_HANA_STRING("");
+        auto ret = meta_split(str);
 
         CHECK(type_c<decltype(ret)> == type_c<hana::tuple<>>);
     }
 
-    SECTION("split returns one element tuple for non-splittable string") {
+    SECTION("meta_split returns one element tuple for non-meta_splittable string") {
         auto str = BOOST_HANA_STRING("text");
-        auto ret = split(str);
+        auto ret = meta_split(str);
 
         CHECK(type_c<std::remove_reference_t<decltype(ret[0_c])>> == type_c<decltype(str)>);
     }
 
-    SECTION("split splits string with one | in it") {
+    SECTION("meta_split splits string with one | in it") {
         auto str = BOOST_HANA_STRING("te|xt");
-        auto ret = split(str);
+        auto ret = meta_split(str);
         auto exp = hana::make_tuple(
                BOOST_HANA_STRING("te"),
                BOOST_HANA_STRING("xt")
@@ -71,9 +98,9 @@ TEST_CASE("split test cases", "[split][impl][meta]") {
         CHECK(type_c<decltype(ret)> == type_c<decltype(exp)>);
     }
 
-    SECTION("split splits string with multiple | in it") {
+    SECTION("meta_split splits string with multiple | in it") {
         auto str = BOOST_HANA_STRING("te|xt|te|xt|t");
-        auto ret = split(str);
+        auto ret = meta_split(str);
         auto exp = hana::make_tuple(
                BOOST_HANA_STRING("te"),
                BOOST_HANA_STRING("xt"),

@@ -51,7 +51,7 @@
 // project
 #include "meta.hpp"
 #include "dissector.hpp"
-#include "split.hpp"
+#include "meta_split.hpp"
 
 namespace info::cli {
   template<class T>
@@ -80,7 +80,7 @@ namespace info::cli {
 
       constexpr static auto strs = meta::map_if<
              meta::map_if<
-                    decltype(impl::split(boost::hana::string_c<cs...>)),
+                    decltype(impl::meta_split(boost::hana::string_c<cs...>)),
                     not_len1,
                     add_long_dash
              >,
