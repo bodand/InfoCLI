@@ -89,6 +89,27 @@ namespace info::cli::meta {
   template<class T>
   using head = typename head_<T>::type;
 
+  // tail ---------------------------------------------------------------------
+  template<class>
+  struct tail_;
+
+  template<
+         template<class...> class L, class T, class... Args
+  >
+  struct tail_<L<T, Args...>> {
+      using type = L<Args...>;
+  };
+
+  template<
+         template<class...> class L
+  >
+  struct tail_<L<>> {
+      using type = L<>;
+  };
+
+  template<class T>
+  using tail = typename tail_<T>::type;
+
   // map ----------------------------------------------------------------------
   template<class, template<class> class>
   struct map_;

@@ -37,29 +37,24 @@
 // Boost.Hana
 #include <boost/hana/string.hpp>
 #include <boost/hana/tuple.hpp>
-#include <boost/hana/integral_constant.hpp>
-#include <boost/hana/contains.hpp>
-#include <boost/hana/not_equal.hpp>
-#include <boost/hana/plus.hpp>
-#include <boost/hana/minus.hpp>
-#include <boost/hana/take_back.hpp>
-#include <boost/hana/take_while.hpp>
-#include <boost/hana/length.hpp>
-#include <boost/hana/prepend.hpp>
+#include <boost/hana/equal.hpp>
+
+// Boost.MP11
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/utility.hpp>
 
 // info::utils
 #include <info/_macros.hpp>
 
+// project
+#include "meta.hpp"
+
 namespace info::cli::impl {
   namespace hana = boost::hana;
+  using namespace boost::mp11;
 
-  struct split_ {
-      template<class Str>
-      INFO_CONSTEVAL auto operator()(Str str) const {
-          return split_::split(str);
-      }
-
-  private:
+  class split_ {
       template<class T>
       struct stringify_;
 
@@ -71,45 +66,41 @@ namespace info::cli::impl {
           using type = hana::string<Args...>;
       };
 
-      template<class Str_>
-      INFO_CONSTEVAL static auto tuplify(Str_ str) {
-          return hana::to_tuple(str);
-      }
+      template<class T>
+      using stringify = typename stringify_<T>::type;
 
-      template<class Tpl>
-      INFO_CONSTEVAL static auto stringify(Tpl) {
-          return typename stringify_<Tpl>::type{};
-      }
+      template<class S>
+      using tuplify = decltype(hana::to_tuple(S{}));
 
-      template<class Str_, class Pred>
-      INFO_CONSTEVAL static auto str_take_while(Str_&& str, Pred&& pred) {
-          return stringify(hana::take_while(tuplify(std::forward<Str_>(str)), std::forward<Pred>(pred)));
-      }
+      template<class Ch, class Tpl>
+      struct f_ {
+          using type = mp_if_c<
+                 Ch{} == hana::char_c<'|'>,
+                 mp_push_front<Tpl, hana::string<>>,
+                 mp_append<
+                        hana::tuple<
+                               stringify<mp_push_front<
+                                      tuplify<mp_eval_if<
+                                             mp_empty<Tpl>,
+                                             hana::string<>,
+                                             mp_front,
+                                             Tpl
+                                      >>,
+                                      Ch
+                               >>
+                        >,
+                        meta::tail<Tpl>
+                 >
+          >;
+      };
 
-      template<class Str_, class N>
-      INFO_CONSTEVAL static auto str_take_back(Str_&& str, N&& count) {
-          return stringify(hana::take_back(tuplify(std::forward<Str_>(str)), std::forward<N>(count)));
-      }
+      template<class Ch, class Tpl>
+      using f = typename f_<Ch, Tpl>::type;
 
-      template<class Str_,
-             typename = std::enable_if_t<hana::contains(Str_{}, hana::char_c<'|'>)>>
-      INFO_CONSTEVAL static auto split(Str_ str) {
-          // fixme: this is horrendous: recursion
-          auto head = str_take_while(str, hana::not_equal.to(hana::char_c<'|'>));
-          auto tail = str_take_back(str, hana::length(str) - (hana::length(head) + hana::size_c<1>));
-
-          return hana::prepend(split_::split(tail), head);
-      }
-
-      template<class Str_,
-             typename = std::enable_if_t<!hana::contains(Str_{}, hana::char_c<'|'>)>,
-             typename = int>
-      INFO_CONSTEVAL static auto split(Str_ str) {
-          return hana::make_tuple(str);
-      }
-
-      INFO_CONSTEVAL static auto split(hana::string<>) {
-          return hana::tuple{};
+  public:
+      template<class Str>
+      INFO_CONSTEVAL auto operator()(Str) const {
+          return mp_reverse_fold<tuplify<Str>, hana::tuple<>, f>{};
       }
   };
 

@@ -89,6 +89,7 @@ target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
                       INTERFACE
                       info::utils
                       ${HANA_LINK}
+                      ${MP11_LINK}
                       )
 
 ## Set target properties
