@@ -29,29 +29,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //
-// Created by bodand on 2020-05-17.
+// Created by bodand on 2020-05-18.
 //
 
 #pragma once
+/// Aggregate header for all specializable templates
 
-// Boost.Hana
-#include <boost/hana/type.hpp>
-
-namespace info::cli::impl {
-  template<class>
-  class type_hash_hlp_ {
-      constexpr const static int i = 0;
-  public:
-      constexpr const static int* value{&i};
-  };
-
-  using type_hash = int*;
-
-  template<class T>
-  constexpr type_hash as_type_hash = type_hash_hlp_<T>::value;
-
-  template<class T>
-  constexpr type_hash mk_type_hash(hana::basic_type<T>) {
-      return as_type_hash<T>;
-  }
-}
+#include "error_reporter.hpp"
+#include "type_parser.hpp"
+#include "type_data.hpp"

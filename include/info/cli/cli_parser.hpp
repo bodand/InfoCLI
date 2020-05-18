@@ -52,23 +52,16 @@
 #include <info/functor.hpp>
 
 // project
-#include "type_hash.hpp"
+#include "type_data.hpp"
+#include "error_reporter.hpp"
 #include "type_parser.hpp"
 #include "split.hpp"
 
 namespace info::cli {
   namespace impl {
     struct typed_callback {
-        type_hash _hash;
+        impl::rt_type_data _data;
         info::functor<void(std::string_view)> _func;
-
-        constexpr bool is(impl::type_hash hash) {
-            return _hash == hash;
-        }
-
-        void operator()(std::string_view str) {
-            _func(str);
-        }
     };
   }
 
@@ -78,24 +71,31 @@ namespace info::cli {
           boost::hana::for_each(
                  boost::hana::make_tuple(ms...),
                  [&](auto tpl) {
-                   boost::hana::unpack( // this unpack-fuse-unpack combo exists
-                                        // because Matchers are tuples thus
-                                        // we have 1-tuples holding
-                                        // tuples, so the first unpack gets the
-                                        // tuple from the 1-tuple, then fuse
-                                        // turns the returned 2-tuple into
-                                        // the key hana::string and the signature
-                                        // 2-tuple which will get unpacked into
-                                        // the hana::type and the function callback
+                   boost::hana::unpack(
+                          // this unpack-fuse-unpack combo exists
+                          // because Matchers are tuples thus
+                          // we have 1-tuples holding
+                          // tuples, so the first unpack gets the
+                          // tuple from the 1-tuple, then fuse
+                          // turns the returned 2-tuple into
+                          // the key hana::string and the signature
+                          // 2-tuple which will get unpacked into
+                          // the hana::type and the function callback
                           tpl,
                           boost::hana::fuse([&](auto key, auto sig) {
                             _val[key.c_str()] = boost::hana::unpack(
                                    sig,
                                    [](auto T, auto func) {
                                      return impl::typed_callback{
-                                            impl::mk_type_hash(T),
+                                            impl::rt_type_data::make(T),
                                             [=](std::string_view arg) {
-                                              func(*(impl::wrapped_type_parser(T)(arg)));
+                                              auto parsed = impl::wrapped_type_parser(T)(arg);
+
+                                              if (parsed) {
+                                                  func(*parsed);
+                                              } else {
+                                                  _error(parsed.error());
+                                              }
                                             }
                                      };
                                    });
@@ -106,18 +106,106 @@ namespace info::cli {
       };
 
       std::vector<std::string_view>
-      operator()(int argc, char** argv) const {
+      operator()(int argc, char** argv) {
           std::vector<std::string_view> ret;
           ret.emplace_back(argv[0]); // toss program name where I don't see it
 
           for (int i = 1; i < argc; ++i) {
-              // todo
+              std::string_view arg{argv[i]};
+
+              // filter end of options
+              if (arg == "--") {
+                  finish_all(argc, argv, ret, i);
+                  return ret;
+              }
+
+              // filter empty input
+              if (arg.empty()) {
+                  ret.emplace_back("");
+                  continue;
+              }
+
+              // filter non options
+              if (arg[0] != '-' && arg.size() > 1) {
+                  ret.emplace_back(std::move(arg));
+                  continue;
+              }
+
+              if (arg[1] == '-') { // --<...>
+                  handle_long_opt(arg, argc, argv, ret, i);
+              } else { // -<...>
+                  handle_short_opt(arg, argc, argv, ret, i);
+              }
           }
 
-          return {};
+          return ret;
       }
 
   private:
+      void finish_all(int argc, char** argv,
+                      std::vector<std::string_view>& ret,
+                      int i) const {
+          for (int j = i + 1; j < argc; ++j) {
+              ret.emplace_back(argv[j]);
+          }
+      }
+
+      void handle_long_opt(std::string_view arg,
+                           int argc, char** argv,
+                           std::vector<std::string_view>& ret,
+                           int& i) {
+          auto[opt, val] = impl::split(arg);
+
+          // "--opt=val"
+          if (!val.empty()) {
+              auto iter = _val.find(opt);
+              if (iter == _val.end()) {
+                  _error("Unexpected option found: " + opt + ". Use --help for usage.");
+                  return;
+              }
+              auto&[__, fn] = iter->second;
+              fn(val);
+              return;
+          }
+
+          // "--opt="
+          if (arg.back() == '=') {
+              auto iter = _val.find(opt);
+              auto&[__, fn] = iter->second;
+              fn("");
+              return;
+          }
+
+          // "--opt" => opt = arg
+          if (auto iter = _val.find(opt);
+                 iter != _val.end()) {
+              auto&[data, fn] = iter->second;
+
+              if (data.allow_nothing) { // "--opt"
+                  fn(data.default_val);
+                  return;
+              }
+
+              if (i + 1 < argc) { // "--opt" "val"
+                  ++i;
+                  fn(argv[i]);
+                  return;
+              }
+              _error("Expected value after encountering option: " +
+                     opt + ". But found end of input. Use --help for usage.");
+              return;
+          }
+          _error("Unexpected option found: " + opt + ". Use --help for usage.");
+      }
+
+      void handle_short_opt(std::string_view arg,
+                            int argc, char** argv,
+                            std::vector<std::string_view>& ret,
+                            int i) const {
+          // todo
+      }
+
+      static error_reporter<> _error;
       std::unordered_map<std::string, impl::typed_callback> _val;
   };
 }
