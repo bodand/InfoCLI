@@ -60,6 +60,15 @@
 namespace info::cli {
   namespace impl {
     struct typed_callback {
+        typed_callback()
+               : _data{impl::rt_type_data::make(hana::type_c<void>)},
+                 _func{[](auto) {}} {}
+
+        template<class Functor>
+        typed_callback(rt_type_data data, Functor&& func)
+               : _data{data},
+                 _func{std::forward<Functor>(func)} {}
+
         impl::rt_type_data _data;
         info::functor<void(std::string_view)> _func;
     };
@@ -68,41 +77,28 @@ namespace info::cli {
   template<class... Matchers>
   struct cli_parser {
       cli_parser(Matchers... ms) {
-          boost::hana::for_each(
-                 boost::hana::make_tuple(ms...),
-                 [&](auto tpl) {
-                   boost::hana::unpack(
-                          // this unpack-fuse-unpack combo exists
-                          // because Matchers are tuples thus
-                          // we have 1-tuples holding
-                          // tuples, so the first unpack gets the
-                          // tuple from the 1-tuple, then fuse
-                          // turns the returned 2-tuple into
-                          // the key hana::string and the signature
-                          // 2-tuple which will get unpacked into
-                          // the hana::type and the function callback
-                          tpl,
-                          boost::hana::fuse([&](auto key, auto sig) {
-                            _val[key.c_str()] = boost::hana::unpack(
-                                   sig,
-                                   [](auto T, auto func) {
-                                     return impl::typed_callback{
-                                            impl::rt_type_data::make(T),
-                                            [=](std::string_view arg) {
-                                              auto parsed = impl::wrapped_type_parser(T)(arg);
+          (boost::hana::for_each(
+                 ms,
+                 boost::hana::fuse([&](auto key, auto sig) {
+                   _val[key.c_str()] = boost::hana::unpack(
+                          sig,
+                          [](auto T, auto func) {
+                            return impl::typed_callback{
+                                   impl::rt_type_data::make(T),
+                                   [=](std::string_view arg) {
+                                     auto parsed = impl::wrapped_type_parser(T)(arg);
 
-                                              if (parsed) {
-                                                  func(*parsed);
-                                              } else {
-                                                  _error(parsed.error());
-                                              }
-                                            }
-                                     };
-                                   });
-                          })
+                                     if (parsed) {
+                                         func(*parsed);
+                                     } else {
+                                         _error(parsed.error());
+                                     }
+                                   }
+                            };
+                          }
                    );
-                 }
-          );
+                 })
+          ), ...);
       };
 
       std::vector<std::string_view>
@@ -142,6 +138,7 @@ namespace info::cli {
       }
 
   private:
+
       void finish_all(int argc, char** argv,
                       std::vector<std::string_view>& ret,
                       int i) const {
@@ -205,7 +202,7 @@ namespace info::cli {
           // todo
       }
 
-      static error_reporter<> _error;
+      inline static error_reporter<> _error;
       std::unordered_map<std::string, impl::typed_callback> _val;
   };
 }

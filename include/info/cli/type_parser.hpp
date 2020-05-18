@@ -35,19 +35,24 @@
 #pragma once
 
 // stdlib
+#include <string>
 #include <string_view>
 #include <sstream>
 #include <charconv>
 #include <cstdlib>
+#include <algorithm>
 
 // info::utils
 #include <info/_macros.hpp>
 #include <info/expected.hpp>
 
 // Boost.Hana
+#define BOOST_HANA_CONFIG_ENABLE_STRING_UDL
 #include <boost/hana/type.hpp>
+#include <boost/hana/string.hpp>
 
 namespace info::cli {
+  using namespace boost::hana::literals;
   template<class>
   struct type_parser;
 
@@ -61,19 +66,19 @@ namespace info::cli {
   template<class T>
   struct type_parser {
       // default - low-performance parser
-      info::expected<T, std::errc>
+      info::expected<T, std::string_view>
       operator()(std::string_view str) {
           T tmp;
           std::istringstream ss{str.data()};
           if (ss >> tmp)
               return tmp;
-          return INFO_UNEXPECTED{std::errc::invalid_argument};
+          return INFO_UNEXPECTED{std::string_view{"Default parsing failed with istringstream"}};
       }
   };
 
   template<>
   struct type_parser<std::string> {
-      info::expected<std::string, std::errc>
+      info::expected<std::string, std::string_view>
       operator()(std::string_view str) {
           return std::string{str};
       }
@@ -81,7 +86,7 @@ namespace info::cli {
 
   template<>
   struct type_parser<std::string_view> {
-      info::expected<std::string_view, std::errc>
+      info::expected<std::string_view, std::string_view>
       operator()(std::string_view str) {
           return str;
       }
@@ -90,7 +95,7 @@ namespace info::cli {
 #define INTEGRAL_PARSER(T)\
   template<>\
   struct type_parser<T> {\
-      info::expected<T, std::errc>\
+      info::expected<T, std::string_view>\
       operator()(std::string_view str) const noexcept {\
           T i;\
           auto[__, ex] = std::from_chars(\
@@ -100,7 +105,9 @@ namespace info::cli {
           if (ex == std::errc{}) {\
               return i;\
           }\
-          return INFO_UNEXPECTED{ex};\
+          return INFO_UNEXPECTED{\
+              std::string_view{"could not parse " #T ""}\
+          };\
       }\
   };
 
@@ -124,57 +131,81 @@ namespace info::cli {
 
   template<>
   struct type_parser<char> {
-      info::expected<char, std::errc>
+      info::expected<char, std::string_view>
       operator()(std::string_view str) const noexcept {
-          if (str.size() == 1)
+          if (str.size() >= 1)
               return str[0];
-          return INFO_UNEXPECTED{std::errc::invalid_argument};
+          return INFO_UNEXPECTED{
+                 std::string_view{"empty value for char typed option"}
+          };
       }
   };
 
   template<>
   struct type_parser<unsigned char> {
-      info::expected<unsigned char, std::errc>
+      info::expected<unsigned char, std::string_view>
       operator()(std::string_view str) const noexcept {
-          if (str.size() == 1)
+          if (str.size() >= 1)
               return static_cast<unsigned char>(str[0]);
-          return INFO_UNEXPECTED{std::errc::invalid_argument};
+          return INFO_UNEXPECTED{
+                 std::string_view{"empty value for unsigned char typed option"}
+          };
       }
   };
 
   template<>
   struct type_parser<float> {
-      info::expected<float, std::errc>
+      info::expected<float, std::string_view>
       operator()(std::string_view str) const noexcept {
           char* ptr;
           float val = std::strtof(str.data(), &ptr);
           if (str.data() == ptr) // couldn't parse shit
-              return INFO_UNEXPECTED{std::errc::invalid_argument};
+              return INFO_UNEXPECTED{
+                     std::string_view{"could not parse float"}
+              };
           return val;
       }
   };
 
   template<>
   struct type_parser<double> {
-      info::expected<double, std::errc>
+      info::expected<double, std::string_view>
       operator()(std::string_view str) const noexcept {
           char* ptr;
           double val = std::strtod(str.data(), &ptr);
           if (str.data() == ptr) // couldn't parse shit
-              return INFO_UNEXPECTED{std::errc::invalid_argument};
+              return INFO_UNEXPECTED{
+                     std::string_view{"could not parse double"}
+              };
           return val;
       }
   };
 
   template<>
   struct type_parser<long double> {
-      info::expected<long double, std::errc>
+      info::expected<long double, std::string_view>
       operator()(std::string_view str) const noexcept {
           char* ptr;
           long double val = std::strtold(str.data(), &ptr);
           if (str.data() == ptr) // couldn't parse shit
-              return INFO_UNEXPECTED{std::errc::invalid_argument};
+              return INFO_UNEXPECTED{
+                     std::string_view{"could not parse long double"}
+              };
           return val;
+      }
+  };
+
+  template<>
+  struct type_parser<bool> {
+      info::expected<bool, std::string_view>
+      operator()(std::string_view str) const noexcept {
+          if (str.empty())
+              return false;
+          std::string lc{str};
+          std::transform(lc.begin(), lc.end(), lc.begin(), ::tolower);
+          return !(str == "false"
+                   || str == "off"
+                   || str == "0");
       }
   };
 }
