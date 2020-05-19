@@ -37,6 +37,9 @@ cmake_minimum_required(VERSION 3.14)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CMAKE_CXX_STANDARD 17)
 
+include(GNUInstallDirs)
+include(Utils)
+
 ## Project options
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(INFO_CLI_MAIN On)
@@ -45,6 +48,8 @@ else ()
 endif ()
 
 option(INFO_CLI_BUILD_TESTS "Build the the InfoCLI test suite [Off as dependency]" ${INFO_CLI_MAIN})
+option(INFO_CLI_BUILD_SHARED "Build the the InfoCLI as a shared library [On]" On)
+NameOption(${INFO_CLI_BUILD_SHARED} "SHARED;STATIC" INFO_CLI_BUILD_TYPE)
 
 ## Project
 project(InfoCLI
@@ -64,13 +69,18 @@ set(${INFO_PROJECT_NAME}_HEADER_PATH "${${INFO_PROJECT_NAME}_INCLUDE_DIR}/info/c
 set(${INFO_PROJECT_NAME}_TARGET icli)
 
 ## Initialize target
-add_library(${${INFO_PROJECT_NAME}_TARGET} INTERFACE)
+add_library(${${INFO_PROJECT_NAME}_TARGET} ${INFO_CLI_BUILD_TYPE}
+            src/parse_exception.cpp
+            src/split.cpp
+            src/cli_parser.cpp
+            src/type_parser.cpp
+            )
 add_library(${INFO_PROJECT_NAMESPACE} ALIAS ${${INFO_PROJECT_NAME}_TARGET})
 
 ## Require C++17
 set_target_properties(${${INFO_PROJECT_NAME}_TARGET}
                       PROPERTIES
-                      INTERFACE_CXX_STANDARD 17)
+                      CXX_STANDARD 17)
 
 # Check for required features and
 #  applicable warnings
@@ -78,7 +88,7 @@ include(FeatureTests)
 
 # Add warnings
 target_compile_options(${${INFO_PROJECT_NAME}_TARGET}
-                       INTERFACE
+                       PRIVATE
                        ${${INFO_PROJECT_NAME}_WARNINGS})
 
 # Dependencies
@@ -86,7 +96,7 @@ include(Dependencies)
 
 ## Get dependencies
 target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
-                      INTERFACE
+                      PUBLIC
                       info::utils
                       ${HANA_LINK}
                       ${MP11_LINK}
@@ -94,7 +104,7 @@ target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
 
 ## Set target properties
 target_include_directories(${${INFO_PROJECT_NAME}_TARGET}
-                           INTERFACE
+                           PUBLIC
                            $<INSTALL_INTERFACE:include>
                            $<BUILD_INTERFACE:${${INFO_PROJECT_NAME}_INCLUDE_DIR}>
                            )

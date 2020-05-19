@@ -42,12 +42,5 @@
 namespace info::cli::impl {
   // note that this thing's purpose is to break the string into **2** parts
   // it was not out of my idiocy to implement this as such
-  inline auto split(std::string_view str, std::string_view delim = "=") {
-      std::array<std::string, 2> ret{
-             std::string{str.substr(0, str.find(delim))},
-             ""
-      };
-      ret[1] = str.substr(ret[0].size() + (ret[0].size() != str.size()), str.npos);
-      return ret;
-  }
+  std::array<std::string, 2> split(std::string_view str, std::string_view delim = "=");
 }
