@@ -113,7 +113,7 @@ namespace info::cli {
 
       void handle_short_opt(std::string_view arg,
                             int argc, char** argv,
-                            int i) const;
+                            int i);
 
       static error_reporter<> _error;
       std::unordered_map<std::string, impl::typed_callback> _val;

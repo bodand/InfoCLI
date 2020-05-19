@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-// 
+//
 // Copyright (c) 2020, bodand
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -89,8 +89,64 @@ void info::cli::cli_parser::handle_long_opt(std::string_view arg, int argc, char
     _error("Unexpected option found: " + opt + ". Use --help for usage.");
 }
 
-void info::cli::cli_parser::handle_short_opt(std::string_view arg, int argc, char** argv, int i) const {
-    // todo
+void info::cli::cli_parser::handle_short_opt(std::string_view arg,
+                                             int argc, char** argv, int i) {
+    unsigned n = 2;
+    for (std::string opt{arg.substr(0, 2)};
+         n <= arg.size();
+         opt = '-' + std::string{arg.substr(n++, 1)}) {
+
+        if (auto it = _val.find(opt);
+               it != _val.end()) {
+            auto&[data, fn] = it->second;
+
+            if (data.allow_nothing) { // -ab -> -a
+                fn(data.default_val);
+                continue;
+            }
+
+            if (n == arg.size()) { // "-a" "val"
+                if (i + 1 < argc) {
+                    ++i;
+                    fn(argv[i]);
+                    break;
+                }
+                _error("Expected value after encountering option: " +
+                       opt + ". But found end of input. Use --help for usage.");
+            }
+
+            if (data.expected_type == parse_type::numeric) { // -a12b -> -a 12
+                unsigned copy_num = 0;
+                while (std::isdigit(arg[n + copy_num])
+                       && arg.size() > copy_num) {
+                    ++copy_num;
+                }
+
+                if (copy_num == 0)
+                    _error("Expected numeric value for option: " + opt);
+
+                std::string val(copy_num, '0');
+                std::copy_n(std::next(arg.begin(), n), copy_num, val.begin());
+                n += copy_num;
+
+                fn(val);
+                continue;
+            } else { // characters are allowed
+                if (data.length < 0) { // -Werror -> "-W" "error"
+                    fn(arg.substr(n));
+                    break;
+                }
+                if (arg.size() - n >= (unsigned) data.length) { // do we have enough for that?
+                    fn(arg.substr(n, (unsigned) data.length)); // -aqb -> -a q -b; where q is data.length long
+                    n += static_cast<unsigned>(data.length);
+                    continue;
+                }
+                _error("Inadequate length for value of option: "
+                       + opt + " with given value:" + arg.substr(n).data());
+            }
+        }
+        _error("Unexpected option found: " + opt + ". Use --help for usage.");
+    }
 }
 
 info::cli::error_reporter<> info::cli::cli_parser::_error{};

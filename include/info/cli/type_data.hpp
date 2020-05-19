@@ -95,6 +95,14 @@ namespace info::cli {
       constexpr static parse_type expected_type = parse_type::alphanumeric;
   };
 
+  template<>
+  struct type_data<char> {
+      constexpr static bool allow_nothing = false;
+      constexpr static std::string_view default_value = "";
+      constexpr static int length = 1;
+      constexpr static parse_type expected_type = parse_type::alphanumeric;
+  };
+
   namespace impl {
     struct rt_type_data {
         bool allow_nothing;

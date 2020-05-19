@@ -70,7 +70,17 @@ namespace info::cli {
 
   INTEGRAL_PARSER_IMPL(unsigned short)
 
-  INTEGRAL_PARSER_IMPL(int)
+  info::expected<int, std::string_view>
+  type_parser<int>::operator()(std::string_view str) const noexcept {
+      if (str.empty()) {
+          return unexpected{std::string_view{"empty value for " "int" " typed option"}};
+      }
+      int i;
+      auto[p, ex]=std::from_chars(str.data(), str.data() + str.size(), i);
+      if (ex == std::errc{})
+          return i;
+      return unexpected{std::string_view{"could not parse " "int"}};
+  }
 
   INTEGRAL_PARSER_IMPL(unsigned)
 

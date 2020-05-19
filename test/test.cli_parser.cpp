@@ -40,7 +40,7 @@
 #include <info/cli.hpp>
 using namespace info::cli;
 
-TEST_CASE("cli_parser test cases", "[cli_parser][api]") {
+TEST_CASE("cli_parser test cases", "[cli_parser][api][!throws]") {
     SECTION("cli_parser matches GNU long options") {
         int called = 0;
         int not_called = 0;
@@ -136,5 +136,95 @@ TEST_CASE("cli_parser test cases", "[cli_parser][api]") {
         CHECK_FALSE(opt);
         CHECK(ret.size() == 2);
         CHECK_THAT(ret, Catch::VectorContains(std::string_view{"--bool"}));
+    }
+
+    SECTION("single short options") {
+        bool called = false;
+        bool not_called = false;
+        cli_parser cli{
+               "int|i"_opt->*called,
+               "o"_opt->*not_called
+        };
+        auto args = std::array{"a.out", "-i"};
+
+        (void) cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(called);
+        CHECK_FALSE(not_called);
+    }
+
+    SECTION("packed short options") {
+        bool called = false;
+        bool called2 = false;
+        cli_parser cli{
+               "i"_opt->*called,
+               "o"_opt->*called2
+        };
+        auto args = std::array{"a.out", "-io"};
+
+        (void) cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(called);
+        CHECK(called2);
+    }
+
+    SECTION("shortopts with unknown length value") {
+        std::string warn;
+        cli_parser cli{
+               "W"_opt->*warn
+        };
+        auto args = std::array{"a.out", "-Weverything"};
+
+        (void) cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(warn == "everything");
+    }
+
+    SECTION("packed shortopts with known length values") {
+        char c = '\0';
+        bool b = false;
+        cli_parser cli{
+               "c"_opt->*c,
+               "b"_opt->*b
+        };
+        auto args = std::array{"a.out", "-cqb"};
+
+        (void) cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(c == 'q');
+        CHECK(b);
+    }
+
+    SECTION("packed shortopts with numeric value") {
+        int i = 0;
+        bool b = false;
+        cli_parser cli{
+               "i"_opt->*i,
+               "b"_opt->*b
+        };
+        auto args = std::array{"a.out", "-i42b"};
+
+        (void) cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(i == 42);
+        CHECK(b);
+    }
+
+    SECTION("complex packade shortops") {
+        std::string warn;
+        int i = 0;
+        char c = 0;
+        cli_parser cli{
+               "i"_opt->*i,
+               "c"_opt->*c,
+               "W"_opt->*warn,
+        };
+        auto args = std::array{"a.out", "-cii42Werror-prone-option-usage"};
+
+        (void) cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(warn == "error-prone-option-usage");
+        CHECK(i == 42);
+        CHECK(c == 'i');
     }
 }
