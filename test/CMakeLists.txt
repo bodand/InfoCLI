@@ -48,6 +48,9 @@ target_link_libraries(cli_test
                       Catch2::Catch2
                       )
 
+target_compile_options(cli_test
+                       PUBLIC ${CLI_WARNINGS})
+
 set_target_properties(cli_test PROPERTIES
                       CXX_STANDARD 17)
 

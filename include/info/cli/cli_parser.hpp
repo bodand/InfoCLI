@@ -77,7 +77,7 @@ namespace info::cli {
           (boost::hana::for_each(
                  ms,
                  boost::hana::fuse([&](auto key, auto sig) {
-                   _val[key.c_str()] = boost::hana::unpack(
+                   _val.try_emplace(key.c_str(), boost::hana::unpack(
                           sig,
                           [](auto T, auto func) {
                             return impl::typed_callback{
@@ -93,11 +93,12 @@ namespace info::cli {
                                    }
                             };
                           }
-                   );
+                   ));
                  })
           ), ...);
       }
 
+      INFO_NODISCARD("Return value is equi")
       std::vector<std::string_view>
       operator()(int argc, char** argv);
 
