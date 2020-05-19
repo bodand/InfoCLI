@@ -35,6 +35,9 @@
 #pragma once
 
 // stdlib
+#include <iostream>
+#include <typeinfo>
+
 #include <string>
 #include <string_view>
 #include <sstream>
@@ -47,12 +50,9 @@
 #include <info/expected.hpp>
 
 // Boost.Hana
-#define BOOST_HANA_CONFIG_ENABLE_STRING_UDL
 #include <boost/hana/type.hpp>
-#include <boost/hana/string.hpp>
 
 namespace info::cli {
-  using namespace boost::hana::literals;
   template<class>
   struct type_parser;
 
@@ -68,11 +68,86 @@ namespace info::cli {
       // default - low-performance parser
       info::expected<T, std::string_view>
       operator()(std::string_view str) {
+          std::cout << "Default parser: " << typeid(T).name() << std::endl;
           T tmp;
           std::istringstream ss{str.data()};
           if (ss >> tmp)
               return tmp;
           return INFO_UNEXPECTED{std::string_view{"Default parsing failed with istringstream"}};
       }
+  };
+
+  template<>
+  struct type_parser<std::string> {
+      info::expected<std::string, std::string_view>
+      operator()(std::string_view str);
+  };
+
+  template<>
+  struct type_parser<std::string_view> {
+      info::expected<std::string_view, std::string_view>
+      operator()(std::string_view str);
+  };
+
+
+#define INTEGRAL_PARSER(T)                                                     \
+  template<>                                                                   \
+  struct type_parser<T> {                                                      \
+      info::expected<T, std::string_view>                                      \
+      operator()(std::string_view str) const noexcept;                         \
+  };
+
+  INTEGRAL_PARSER(short)
+
+  INTEGRAL_PARSER(unsigned short)
+
+  INTEGRAL_PARSER(int)
+
+  INTEGRAL_PARSER(unsigned)
+
+  INTEGRAL_PARSER(long)
+
+  INTEGRAL_PARSER(unsigned long)
+
+  INTEGRAL_PARSER(long long)
+
+  INTEGRAL_PARSER(unsigned long long)
+
+#undef INTEGRAL_PARSER
+
+  template<>
+  struct type_parser<char> {
+      info::expected<char, std::string_view>
+      operator()(std::string_view str) const noexcept;
+  };
+
+  template<>
+  struct type_parser<unsigned char> {
+      info::expected<unsigned char, std::string_view>
+      operator()(std::string_view str) const noexcept;
+  };
+
+  template<>
+  struct type_parser<float> {
+      info::expected<float, std::string_view>
+      operator()(std::string_view str) const noexcept;
+  };
+
+  template<>
+  struct type_parser<double> {
+      info::expected<double, std::string_view>
+      operator()(std::string_view str) const noexcept;
+  };
+
+  template<>
+  struct type_parser<long double> {
+      info::expected<long double, std::string_view>
+      operator()(std::string_view str) const noexcept;
+  };
+
+  template<>
+  struct type_parser<bool> {
+      info::expected<bool, std::string_view>
+      operator()(std::string_view str) const noexcept;
   };
 }
