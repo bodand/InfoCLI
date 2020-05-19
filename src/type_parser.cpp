@@ -48,21 +48,21 @@ namespace info::cli {
 #define INTEGRAL_PARSER_IMPL(T)                                                \
   info::expected<T, std::string_view>                                          \
   type_parser<T>::operator()(std::string_view str) const noexcept {            \
+      if (str.empty()) {                                                       \
+          return INFO_UNEXPECTED{std::string_view{                             \
+                 "empty value for " #T " typed option"                         \
+          }};                                                                  \
+      }                                                                        \
       T i;                                                                     \
       auto[p, ex] = std::from_chars(                                           \
              str.data(),                                                       \
              str.data() + str.size(),                                          \
              i                                                                 \
       );                                                                       \
-      if (p == str.data()) {                                                   \
-          INFO_UNEXPECTED{std::string_view{                                    \
-                 "Empty value for short typed option"                          \
-          }};                                                                  \
-      }                                                                        \
       if (ex == std::errc{})                                                   \
           return i;                                                            \
       return INFO_UNEXPECTED{std::string_view{                                 \
-             "could not parse short"                                           \
+             "could not parse " #T                                             \
       }};                                                                      \
   }
 

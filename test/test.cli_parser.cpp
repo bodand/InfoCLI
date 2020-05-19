@@ -48,9 +48,9 @@ TEST_CASE("cli_parser test cases", "[cli_parser][api]") {
                "int|i"_opt->*called,
                "oi"_opt->*not_called
         };
-        std::array<const char*, 2> args = {"a.out", "--int=42"};
+        auto args = std::array{"a.out", "--int=42"};
 
-        cli(args.size(), const_cast<char**>(args.data()));
+        (void) cli(args.size(), const_cast<char**>(args.data()));
 
         CHECK(called == 42);
         CHECK(not_called == 0);
@@ -63,11 +63,78 @@ TEST_CASE("cli_parser test cases", "[cli_parser][api]") {
                "int|i"_opt->*called,
                "oi"_opt->*not_called
         };
-        std::array<const char*, 3> args = {"a.out", "--int", "42"};
+        auto args = std::array{"a.out", "--int", "42"};
 
-        cli(args.size(), const_cast<char**>(args.data()));
+        (void) cli(args.size(), const_cast<char**>(args.data()));
 
         CHECK(called == 42);
         CHECK(not_called == 0);
+    }
+
+    SECTION("bool option does not take up following arg") {
+        bool opt = false;
+        cli_parser cli{
+               "bool"_opt->*opt
+        };
+        auto args = std::array{"a.out", "--bool", "keep"};
+
+        auto ret = cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK(opt);
+        CHECK(ret.size() == 2);
+        CHECK_THAT(ret, Catch::VectorContains(std::string_view{"keep"}));
+    }
+
+    SECTION("non-empty accepting option throws with explicit empty input") {
+        int opt = 0;
+        cli_parser cli{
+               "int"_opt->*opt
+        };
+        auto args = std::array{"a.out", "--int=", "42"};
+
+        CHECK_THROWS_WITH(
+               (void) cli(args.size(), const_cast<char**>(args.data())),
+               "empty value for int typed option"
+        );
+    }
+
+    SECTION("non-empty accepting option throws at the end of input") {
+        int opt = 0;
+        cli_parser cli{
+               "int"_opt->*opt
+        };
+        auto args = std::array{"a.out", "--int"};
+
+        CHECK_THROWS_WITH(
+               (void) cli(args.size(), const_cast<char**>(args.data())),
+               "Expected value after encountering option: --int. But found end of input. Use --help for usage."
+        );
+    }
+
+    SECTION("cli_parser throws when encountering unknown option") {
+        int opt = 0;
+        cli_parser cli{
+               "int"_opt->*opt
+        };
+        auto args = std::array{"a.out", "--unknown"};
+
+        CHECK_THROWS_WITH(
+               (void) cli(args.size(), const_cast<char**>(args.data())),
+               "Unexpected option found: --unknown. Use --help for usage."
+        );
+    }
+
+    SECTION("cli_parser ignores input after --") {
+        bool opt = false;
+        cli_parser cli{
+               "bool"_opt->*opt
+        };
+        auto args = std::array{"a.out", "--", "--bool"};
+
+        auto ret = cli(args.size(), const_cast<char**>(args.data()));
+
+        CHECK_FALSE(opt);
+        CHECK(ret.size() == 2);
+        CHECK_THAT(ret, Catch::VectorContains(std::string_view{"--bool"}));
     }
 }

@@ -44,8 +44,8 @@ add_executable(cli_test
                test.type_parser.cpp)
 
 target_link_libraries(cli_test
-                      info::cli
-                      Catch2::Catch2
+                      PUBLIC info::cli
+                      PUBLIC Catch2::Catch2
                       )
 
 target_compile_options(cli_test

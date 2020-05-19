@@ -35,9 +35,6 @@
 #pragma once
 
 // stdlib
-#include <iostream>
-#include <typeinfo>
-
 #include <string>
 #include <string_view>
 #include <sstream>
@@ -68,7 +65,6 @@ namespace info::cli {
       // default - low-performance parser
       info::expected<T, std::string_view>
       operator()(std::string_view str) {
-          std::cout << "Default parser: " << typeid(T).name() << std::endl;
           T tmp;
           std::istringstream ss{str.data()};
           if (ss >> tmp)

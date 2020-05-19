@@ -98,7 +98,7 @@ namespace info::cli {
           ), ...);
       }
 
-      INFO_NODISCARD("Return value is equi")
+      INFO_NODISCARD("Return value is the remaining non-option values in the input args")
       std::vector<std::string_view>
       operator()(int argc, char** argv);
 
