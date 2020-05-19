@@ -74,9 +74,8 @@ TEST_CASE("option test cases", "[option][api]") {
         auto matcher = "int|i"_opt->*i;
 
         CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<2>>);
-        CHECK(type_c<decltype(hana::keys(hana::to_map(matcher)))> == type_c<hana::basic_tuple<decltype("--int"_s), decltype("-i"_s)>>);
-        CHECK(std::is_invocable_v<decltype(hana::second(hana::to_map(matcher)["--int"_s])), int>);
-        CHECK(std::is_invocable_v<decltype(hana::second(hana::to_map(matcher)["-i"_s])), int>);
+        CHECK(type_c<decltype(matcher[0_c][0_c])> == type_c<decltype("--int"_s)&>);
+        CHECK(type_c<decltype(matcher[1_c][0_c])> == type_c<decltype("-i"_s)&>);
     }
 
     SECTION("option creates expected map with reference") {
@@ -84,8 +83,7 @@ TEST_CASE("option test cases", "[option][api]") {
         auto matcher = "int"_opt->*i;
 
         CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
-        CHECK(type_c<decltype(hana::keys(hana::to_map(matcher)))> == type_c<hana::basic_tuple<decltype("--int"_s)>>);
-        CHECK(std::is_invocable_v<decltype(hana::second(hana::to_map(matcher)["--int"_s])), int>);
+        CHECK(type_c<decltype(matcher[0_c][0_c])> == type_c<decltype("--int"_s)&>);
     }
 
     SECTION("option creates expected map with typed functor") {
@@ -102,8 +100,9 @@ TEST_CASE("option test cases", "[option][api]") {
         auto fun = func{42};
         auto matcher = "int"_opt->*fun;
         CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
-        CHECK(type_c<decltype(hana::keys(hana::to_map(matcher)))> == type_c<hana::basic_tuple<decltype("--int"_s)>>);
-        CHECK(std::is_invocable_v<decltype(hana::second(hana::to_map(matcher)["--int"_s])), int>);
+        CHECK(type_c<decltype(matcher[0_c][0_c])> == type_c<decltype("--int"_s)&>);
+        // CHECK(type_c<decltype(matcher[0_c][1_c])> == type_c<hana::basic_type<int>&>);
+        CHECK(type_c<decltype(matcher[0_c][2_c])> == type_c<func&>);
     }
 
     SECTION("options creates expected map with generic-lambda-style functor") {
@@ -111,14 +110,14 @@ TEST_CASE("option test cases", "[option][api]") {
 
         auto matcher = "int"_opt->*fun;
         CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
-        CHECK(type_c<decltype(hana::keys(hana::to_map(matcher)))> == type_c<hana::basic_tuple<decltype("--int"_s)>>);
-        CHECK(std::is_invocable_v<decltype(hana::second(hana::to_map(matcher)["--int"_s])), std::string_view>);
+        // CHECK(type_c<decltype(matcher[0_c][1_c])> == type_c<hana::basic_type<std::string_view>&>);
+        CHECK(type_c<decltype(matcher[0_c][2_c])> == type_c<gen_func&>);
     }
 
     SECTION("option creates their help appropriately") {
         auto matcher = "int"_opt["help string"]->*[](int) {};
         (void) matcher;
 
-        CHECK(help<hana::string<'i', 'n', 't'>>.msg == "help string");
+        CHECK(help<hana::tuple<hana::string<'-', '-', 'i', 'n', 't'>>>.msg == "help string");
     }
 }

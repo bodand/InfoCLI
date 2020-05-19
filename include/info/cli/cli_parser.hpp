@@ -76,24 +76,19 @@ namespace info::cli {
       cli_parser(Matchers... ms) {
           (boost::hana::for_each(
                  ms,
-                 boost::hana::fuse([&](auto key, auto sig) {
-                   _val.try_emplace(key.c_str(), boost::hana::unpack(
-                          sig,
-                          [](auto T, auto func) {
-                            return impl::typed_callback{
-                                   impl::rt_type_data::make(T),
-                                   [=](std::string_view arg) {
-                                     auto parsed = impl::wrapped_type_parser(T)(arg);
+                 boost::hana::fuse([&](auto key, auto T, auto func) {
+                   _val.try_emplace(key.c_str(), impl::typed_callback{
+                          impl::rt_type_data::make(T),
+                          [=](std::string_view arg) {
+                            auto parsed = impl::wrapped_type_parser(T)(arg);
 
-                                     if (parsed) {
-                                         func(*parsed);
-                                     } else {
-                                         _error(parsed.error());
-                                     }
-                                   }
-                            };
+                            if (parsed) {
+                                func(*parsed);
+                            } else {
+                                _error(parsed.error());
+                            }
                           }
-                   ));
+                   });
                  })
           ), ...);
       }

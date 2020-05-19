@@ -54,7 +54,7 @@
 #include "meta_split.hpp"
 
 namespace info::cli {
-  template<class T>
+  template<class>
   struct help_t {
       constexpr void operator()(std::string_view txt) const {
           msg = txt;
@@ -91,9 +91,10 @@ namespace info::cli {
       template<class T, class Action, class... Strs>
       constexpr static auto mk_matcher(Action act, boost::hana::tuple<Strs...>) {
           return boost::hana::make_tuple(
-                 boost::hana::make_pair(
+                 boost::hana::make_tuple(
                         Strs{},
-                        boost::hana::make_pair(boost::hana::type_c<T>, act)
+                        boost::hana::type_c<T>,
+                        act
                  )...
           );
       }
@@ -148,7 +149,7 @@ namespace info::cli {
       }
 
       INFO_CONSTEVAL auto operator[](std::string_view txt) const {
-          help<boost::hana::string<cs...>>(txt);
+          help<std::decay_t<decltype(strs)>>(txt);
           return *this;
       }
   };
