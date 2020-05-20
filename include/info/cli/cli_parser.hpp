@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <string>
+#include <iostream>
 
 // Boost.Hana
 #include <boost/hana/tuple.hpp>
@@ -54,7 +55,12 @@
 #include "type_data.hpp"
 #include "error_reporter.hpp"
 #include "type_parser.hpp"
+#include "help_generator.hpp"
 #include "split.hpp"
+
+#ifndef INFO_CLI_HELP_END_EXECUTION
+#  define INFO_CLI_HELP_END_EXECUTION true
+#endif
 
 namespace info::cli {
   namespace impl {
@@ -76,7 +82,9 @@ namespace info::cli {
       cli_parser(Matchers... ms) {
           (boost::hana::for_each(
                  ms,
-                 boost::hana::fuse([&](auto key, auto T, auto func) {
+                 boost::hana::fuse([&](auto key, auto help, auto T, auto func) {
+                   _help.register_(key, help);
+
                    _val.try_emplace(key.c_str(), impl::typed_callback{
                           impl::rt_type_data::make(T),
                           [=](std::string_view arg) {
@@ -91,6 +99,41 @@ namespace info::cli {
                    });
                  })
           ), ...);
+
+          if (_help.meaningful) {
+              _val.try_emplace("--help", impl::typed_callback{
+                     impl::rt_type_data::make(boost::hana::type_c<bool>),
+                     [&](std::string_view arg) {
+                       auto parsed = type_parser<bool>{}(arg);
+
+                       if (parsed
+                           && *parsed) {
+                           _help.print();
+                           if constexpr (INFO_CLI_HELP_END_EXECUTION) {
+                               std::exit(1);
+                           }
+                       } else {
+                           _error(parsed.error());
+                       }
+                     }
+              });
+              _val.try_emplace("-h", impl::typed_callback{
+                     impl::rt_type_data::make(boost::hana::type_c<bool>),
+                     [&](std::string_view arg) {
+                       auto parsed = type_parser<bool>{}(arg);
+
+                       if (parsed
+                           && *parsed) {
+                           _help.print();
+                           if constexpr (INFO_CLI_HELP_END_EXECUTION) {
+                               std::exit(1);
+                           }
+                       } else {
+                           _error(parsed.error());
+                       }
+                     }
+              });
+          }
       }
 
       INFO_NODISCARD("Return value is the remaining non-option values in the input args")
@@ -112,5 +155,6 @@ namespace info::cli {
 
       static error_reporter<> _error;
       std::unordered_map<std::string, impl::typed_callback> _val;
+      impl::help_generator _help;
   };
 }

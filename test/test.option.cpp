@@ -61,9 +61,9 @@ struct gen_func {
     int i;
 };
 
-TEST_CASE("option test cases", "[option][api]") {
+TEST_CASE("option _opt udl test cases", "[option][udl][api]") {
     SECTION("_opt udl works") {
-        option_str<char, 'a', 'b'> opt{};
+        option_str<'a', 'b'> opt{};
         auto opt2 = "ab"_opt;
 
         CHECK(type_c<decltype(opt)> == type_c<decltype(opt2)>);
@@ -77,8 +77,10 @@ TEST_CASE("option test cases", "[option][api]") {
         CHECK(type_c<decltype(matcher[0_c][0_c])> == type_c<decltype("--int"_s)&>);
         CHECK(type_c<decltype(matcher[1_c][0_c])> == type_c<decltype("-i"_s)&>);
     }
+}
 
-    SECTION("option creates expected map with reference") {
+TEST_CASE("option creates expected callback tuples", "[option][api]") {
+    SECTION("option creates expected tuple with reference") {
         int i = 5;
         auto matcher = "int"_opt->*i;
 
@@ -86,7 +88,7 @@ TEST_CASE("option test cases", "[option][api]") {
         CHECK(type_c<decltype(matcher[0_c][0_c])> == type_c<decltype("--int"_s)&>);
     }
 
-    SECTION("option creates expected map with typed functor") {
+    SECTION("option creates expected tuple with typed functor") {
         struct func {
             void operator()(int) {}
 
@@ -102,22 +104,15 @@ TEST_CASE("option test cases", "[option][api]") {
         CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
         CHECK(type_c<decltype(matcher[0_c][0_c])> == type_c<decltype("--int"_s)&>);
         // CHECK(type_c<decltype(matcher[0_c][1_c])> == type_c<hana::basic_type<int>&>);
-        CHECK(type_c<decltype(matcher[0_c][2_c])> == type_c<func&>);
+        CHECK(type_c<decltype(matcher[0_c][3_c])> == type_c<func&>);
     }
 
-    SECTION("options creates expected map with generic-lambda-style functor") {
+    SECTION("options creates expected tuple with generic-lambda-style functor") {
         auto fun = gen_func{42};
 
         auto matcher = "int"_opt->*fun;
         CHECK(type_c<decltype(hana::length(matcher))> == type_c<hana::size_t<1>>);
         // CHECK(type_c<decltype(matcher[0_c][1_c])> == type_c<hana::basic_type<std::string_view>&>);
-        CHECK(type_c<decltype(matcher[0_c][2_c])> == type_c<gen_func&>);
-    }
-
-    SECTION("option creates their help appropriately") {
-        auto matcher = "int"_opt["help string"]->*[](int) {};
-        (void) matcher;
-
-        CHECK(help<hana::tuple<hana::string<'-', '-', 'i', 'n', 't'>>>.msg == "help string");
+        CHECK(type_c<decltype(matcher[0_c][3_c])> == type_c<gen_func&>);
     }
 }

@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-//
+// 
 // Copyright (c) 2020, bodand
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -29,29 +29,46 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //
-// Created by bodand on 2020-05-15.
+// Created by bodand on 2020-05-20.
 //
 
 #pragma once
 
-// info::utils
-#include <info/_macros.hpp>
+// stdlib
+#include <unordered_map>
+#include <string>
+#include <vector>
 
-// project
-#include "cli/type_data.hpp"
-#include "cli/type_parser.hpp"
-#include "cli/dissector.hpp"
-#include "cli/meta.hpp"
-#include "cli/option.hpp"
-#include "cli/help_generator.hpp"
-#include "cli/cli_parser.hpp"
-#include "cli/error_reporter.hpp"
-#include "cli/parse_exception.hpp"
+// Boost.Hana
+#include <boost/hana/length.hpp>
+#include <boost/hana/is_empty.hpp>
+#include <boost/hana/string.hpp>
 
-namespace info::cli {
-  INFO_CONSTINIT const static struct {
-      int major = 0;
-      int minor = 1;
-      int patch = 0;
-  } Version;
+namespace info::cli::impl {
+  struct help_generator {
+      void print() const noexcept;
+
+      template<class OptStr, class HlpStr>
+      void register_(OptStr opt, HlpStr hlp) noexcept {
+          if (boost::hana::is_empty(hlp)) return; // undocumented opts are ignored
+
+          meaningful = true;
+          _helps[hlp.c_str()].add_opt(opt.c_str());
+      }
+
+      void set_name(std::string_view name);
+
+      bool meaningful{false};
+  private:
+      struct help_str {
+          void add_opt(std::string_view) noexcept;
+
+          std::string print() const noexcept;
+
+          std::string _opts{};
+      };
+
+      std::string _name{};
+      std::unordered_map<std::string, help_str> _helps{};
+  };
 }

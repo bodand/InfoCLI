@@ -36,11 +36,13 @@
 
 #include "type_equality.hpp"
 
+#define INFO_CLI_HELP_END_EXECUTION false
+
 // test'd
 #include <info/cli.hpp>
 using namespace info::cli;
 
-TEST_CASE("cli_parser test cases", "[cli_parser][api][!throws]") {
+TEST_CASE("cli_parser matches long options correctly", "[cli_parser][api][!throws]") {
     SECTION("cli_parser matches GNU long options") {
         int called = 0;
         int not_called = 0;
@@ -70,21 +72,9 @@ TEST_CASE("cli_parser test cases", "[cli_parser][api][!throws]") {
         CHECK(called == 42);
         CHECK(not_called == 0);
     }
+}
 
-    SECTION("bool option does not take up following arg") {
-        bool opt = false;
-        cli_parser cli{
-               "bool"_opt->*opt
-        };
-        auto args = std::array{"a.out", "--bool", "keep"};
-
-        auto ret = cli(args.size(), const_cast<char**>(args.data()));
-
-        CHECK(opt);
-        CHECK(ret.size() == 2);
-        CHECK_THAT(ret, Catch::VectorContains(std::string_view{"keep"}));
-    }
-
+TEST_CASE("cli_parser throws expected errors", "[cli_parser][api][!throws]") {
     SECTION("non-empty accepting option throws with explicit empty input") {
         int opt = 0;
         cli_parser cli{
@@ -123,21 +113,23 @@ TEST_CASE("cli_parser test cases", "[cli_parser][api][!throws]") {
                "Unexpected option found: --unknown. Use --help for usage."
         );
     }
+}
 
-    SECTION("cli_parser ignores input after --") {
-        bool opt = false;
-        cli_parser cli{
-               "bool"_opt->*opt
-        };
-        auto args = std::array{"a.out", "--", "--bool"};
+TEST_CASE("cli_parser ignores input after --", "[cli_parser][api]") {
+    bool opt = false;
+    cli_parser cli{
+           "bool"_opt->*opt
+    };
+    auto args = std::array{"a.out", "--", "--bool"};
 
-        auto ret = cli(args.size(), const_cast<char**>(args.data()));
+    auto ret = cli(args.size(), const_cast<char**>(args.data()));
 
-        CHECK_FALSE(opt);
-        CHECK(ret.size() == 2);
-        CHECK_THAT(ret, Catch::VectorContains(std::string_view{"--bool"}));
-    }
+    CHECK_FALSE(opt);
+    CHECK(ret.size() == 2);
+    CHECK_THAT(ret, Catch::VectorContains(std::string_view{"--bool"}));
+}
 
+TEST_CASE("cli_parser matches short options correctly", "[cli_parser][api]") {
     SECTION("single short options") {
         bool called = false;
         bool not_called = false;
@@ -227,4 +219,37 @@ TEST_CASE("cli_parser test cases", "[cli_parser][api][!throws]") {
         CHECK(i == 42);
         CHECK(c == 'i');
     }
+}
+
+TEST_CASE("cli_parser handles bool options correclt", "[cli_parser][api]") {
+    bool opt = false;
+    cli_parser cli{
+           "bool"_opt->*opt
+    };
+    auto args = std::array{"a.out", "--bool", "keep"};
+
+    auto ret = cli(args.size(), const_cast<char**>(args.data()));
+
+    CHECK(opt);
+    CHECK(ret.size() == 2);
+    CHECK_THAT(ret, Catch::VectorContains(std::string_view{"keep"}));
+}
+
+TEST_CASE("auto-help is generated properly", "[cli_parser][auto-help][api]") {
+    bool b = false;
+    int i = 42;
+    char undocumented = 'C';
+    cli_parser cli{
+           "b|bool"_opt[
+                  "Sets the boolean option [false]"_hlp
+           ]->*b,
+           "i|int"_opt[
+                  "Sets the integer option [42]"_hlp
+           ]->*i,
+           "undoc"_opt->*undocumented
+    };
+    auto args = std::array{"a.out", "--help", "--bool"};
+
+    std::vector<std::string_view> ret;
+    CHECK_NOTHROW(ret = cli(args.size(), const_cast<char**>(args.data())));
 }

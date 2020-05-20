@@ -74,7 +74,7 @@ add_library(${${INFO_PROJECT_NAME}_TARGET} ${INFO_CLI_BUILD_TYPE}
             src/split.cpp
             src/cli_parser.cpp
             src/type_parser.cpp
-            )
+            src/help_generator.cpp)
 add_library(${INFO_PROJECT_NAMESPACE} ALIAS ${${INFO_PROJECT_NAME}_TARGET})
 
 ## Require C++17
@@ -96,10 +96,10 @@ include(Dependencies)
 
 ## Get dependencies
 target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
-                      PUBLIC
-                      info::utils
-                      ${HANA_LINK}
-                      ${MP11_LINK}
+                      PUBLIC info::utils
+                      PUBLIC ${HANA_LINK}
+                      PUBLIC ${MP11_LINK}
+                      PRIVATE fmt::fmt
                       )
 
 ## Set target properties

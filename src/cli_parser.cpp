@@ -154,19 +154,20 @@ info::cli::error_reporter<> info::cli::cli_parser::_error{};
 std::vector<std::string_view>
 info::cli::cli_parser::operator()(int argc, char** argv) {
     std::vector<std::string_view> ret;
+    _help.set_name(argv[0]);
     ret.emplace_back(argv[0]); // toss program name where I don't see it
 
     for (int i = 1; i < argc; ++i) {
         std::string_view arg{argv[i]};
 
         // filter end of options
-        if (arg == "--") {
+        if (__builtin_expect(arg == "--", 0)) {
             finish_all(argc, argv, ret, i);
             return ret;
         }
 
         // filter empty input
-        if (arg.empty()) {
+        if (__builtin_expect(arg.empty(), 0)) {
             ret.emplace_back("");
             continue;
         }

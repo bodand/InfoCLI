@@ -59,6 +59,14 @@ else ()
     set(MP11_LINK "Boost::boost")
 endif ()
 
+# {fmt}
+GetDependency(
+        fmt
+        Git
+        https://github.com/fmtlib/fmt.git
+        6.2.1
+)
+
 # Info* project utilities
 set(INFO_UTILS_BUILD_TESTS Off)
 # InfoUtils needs to disable tests when not main project
