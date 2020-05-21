@@ -74,7 +74,7 @@ GetDependency(
         InfoUtils
         Git
         https://github.com/isbodand/InfoUtils.git
-        v1.4.0
+        v1.5.0
 )
 
 # Test dependencies
