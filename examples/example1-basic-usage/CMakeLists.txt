@@ -36,7 +36,8 @@ add_executable(cli-ex1
 target_link_libraries(cli-ex1
                       info::cli)
 
-add_custom_command(TARGET cli-ex1 POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:info::cli>" ${PROJECT_BINARY_DIR}
-                   COMMENT "Copy icli shared object to working directory of executable")
-
+if (INFO_CLI_BUILD_SHARED)
+    add_custom_command(TARGET cli-ex1 POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:info::cli>" ${PROJECT_BINARY_DIR}
+                       COMMENT "Copy icli shared object to working directory of executable")
+endif ()
