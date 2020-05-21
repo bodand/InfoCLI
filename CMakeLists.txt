@@ -48,6 +48,7 @@ else ()
 endif ()
 
 option(INFO_CLI_BUILD_TESTS "Build the the InfoCLI test suite [Off as dependency]" ${INFO_CLI_MAIN})
+option(INFO_CLI_BUILD_EXAMPLES "Build the the InfoCLI usage examples [Off as dependency]" ${INFO_CLI_MAIN})
 option(INFO_CLI_BUILD_SHARED "Build the the InfoCLI as a shared library [On]" On)
 NameOption(${INFO_CLI_BUILD_SHARED} "SHARED;STATIC" INFO_CLI_BUILD_TYPE)
 
@@ -114,3 +115,7 @@ if (INFO_CLI_BUILD_TESTS)
     add_subdirectory(test)
 endif ()
 
+## Optionally enable examples
+if (INFO_CLI_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
