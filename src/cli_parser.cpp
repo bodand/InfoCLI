@@ -51,7 +51,8 @@ void info::cli::cli_parser::handle_long_opt(std::string_view arg, int argc, char
     if (!val.empty()) {
         auto iter = _val.find(opt);
         if (iter == _val.end()) {
-            _error("Unexpected option found: " + opt + ". Use --help for usage.");
+            _error("Unexpected option found: " + opt +
+                   (_has_help ? ". Use --help for usage." : "."));
             return;
         }
         auto&[__, fn] = iter->second;
@@ -83,10 +84,12 @@ void info::cli::cli_parser::handle_long_opt(std::string_view arg, int argc, char
             return;
         }
         _error("Expected value after encountering option: " +
-               opt + ". But found end of input. Use --help for usage.");
+               opt + ". But found end of input." +
+               (_has_help ? " Use --help for usage." : ""));
         return;
     }
-    _error("Unexpected option found: " + opt + ". Use --help for usage.");
+    _error("Unexpected option found: " + opt +
+           (_has_help ? ". Use --help for usage." : "."));
 }
 
 void info::cli::cli_parser::handle_short_opt(std::string_view arg,
@@ -112,7 +115,8 @@ void info::cli::cli_parser::handle_short_opt(std::string_view arg,
                     break;
                 }
                 _error("Expected value after encountering option: " +
-                       opt + ". But found end of input. Use --help for usage.");
+                       opt + ". But found end of input." +
+                       (_has_help ? " Use --help for usage." : ""));
             }
 
             if (data.expected_type == parse_type::numeric) { // -a12b -> -a 12
@@ -145,7 +149,8 @@ void info::cli::cli_parser::handle_short_opt(std::string_view arg,
                        + opt + " with given value:" + arg.substr(n).data());
             }
         }
-        _error("Unexpected option found: " + opt + ". Use --help for usage.");
+        _error("Unexpected option found: " + opt +
+               (_has_help ? ". Use --help for usage." : "."));
     }
 }
 

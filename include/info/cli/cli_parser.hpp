@@ -136,6 +136,8 @@ namespace info::cli {
                      }
               });
           }
+
+          _has_help = _val.find("help") != _val.end();
       }
 
       INFO_NODISCARD("Return value is the remaining non-option values in the input args")
@@ -158,5 +160,6 @@ namespace info::cli {
       static error_reporter<> _error;
       std::unordered_map<std::string, impl::typed_callback> _val;
       impl::help_generator _help;
+      bool _has_help;
   };
 }
