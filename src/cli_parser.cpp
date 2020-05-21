@@ -32,7 +32,9 @@
 // Created by bodand on 2020-05-19.
 //
 
+// stdlib
 #include <vector>
+#include <filesystem>
 
 #include <info/cli/cli_parser.hpp>
 
@@ -159,7 +161,9 @@ info::cli::error_reporter<> info::cli::cli_parser::_error{};
 std::vector<std::string_view>
 info::cli::cli_parser::operator()(int argc, char** argv) {
     std::vector<std::string_view> ret;
-    _help.set_name(argv[0]);
+    _help.set_name(
+           std::filesystem::path(argv[0]).filename().string()
+    );
     ret.emplace_back(argv[0]); // toss program name where I don't see it
 
     for (int i = 1; i < argc; ++i) {
