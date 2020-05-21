@@ -97,7 +97,7 @@ TEST_CASE("cli_parser throws expected errors", "[cli_parser][api][!throws]") {
 
         CHECK_THROWS_WITH(
                (void) cli(args.size(), const_cast<char**>(args.data())),
-               "Expected value after encountering option: --int. But found end of input. Use --help for usage."
+               "Expected value after encountering option: --int. But found end of input."
         );
     }
 
@@ -110,7 +110,7 @@ TEST_CASE("cli_parser throws expected errors", "[cli_parser][api][!throws]") {
 
         CHECK_THROWS_WITH(
                (void) cli(args.size(), const_cast<char**>(args.data())),
-               "Unexpected option found: --unknown. Use --help for usage."
+               "Unexpected option found: --unknown."
         );
     }
 }

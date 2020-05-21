@@ -3,15 +3,6 @@
 The library allows some templates to be specialized in order to provide custom
 functionality in the library, for supporting custom types and the error reporting.
 
-## specialize.hpp
-
-Under `info/cli/specialize.hpp`, all specializable templates are included without
-anything getting instantiated, so if you wish to specialize anything, include this
-first, define your specializations, then include `info/cli.hpp`.
-The headers' structure other than these two headers is regarded as an implementation
-detail, thus is volatile to depend on, as it can change even with a patch version
-bump.
-
 ## Endpoints
 
 The followings define the requirements for each type of specialization, and their

@@ -29,12 +29,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //
-// Created by bodand on 2020-05-18.
+// Created by bodand on 2020-05-21.
 //
 
 #pragma once
-/// Aggregate header for all specializable templates
 
-#include "error_reporter.hpp"
-#include "type_parser.hpp"
-#include "type_data.hpp"
+struct my_type {
+
+};

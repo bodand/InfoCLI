@@ -8,12 +8,12 @@ vars with the values it parses from the input.
 
 The code is really easy to understand, thankfully to the DSL provided by the library.
 
-First, or course, is to include the required headers. InfoCLI provides two
-headers which should be used when dealing with the library. All other headers 
+First, or course, is to include the required headers. InfoCLI provides one
+header which should be used when dealing with the library. All other headers 
 are declared to be a part of the implementation and are not supposed to be depended on
 and thus these may change without prior warning.
-The two stable headers are `info/cli.hpp` and `info/cli/specialize.hpp`.
-To use the library without any further modifications, one just has to include `info/cli.hpp`.
+The stable header is `info/cli.hpp`.
+To use the library one just has to include `info/cli.hpp`.
 
 After one has included the InfoCLI header, you can start using the library, after just
 one small step first. Because the library's DSL relies on UDL-s, they need
