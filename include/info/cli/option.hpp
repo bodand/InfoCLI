@@ -157,13 +157,15 @@ namespace info::cli {
       }
   };
 
-  template<class CharT, CharT... c>
-  constexpr option_str<c...> operator ""_opt() {
-      return {};
-  }
+  inline namespace literals {
+    template<class CharT, CharT... c>
+    constexpr option_str<c...> operator ""_opt() {
+        return {};
+    }
 
-  template<class CharT, CharT... c>
-  constexpr boost::hana::string<c...> operator ""_hlp() {
-      return {};
+    template<class CharT, CharT... c>
+    constexpr boost::hana::string<c...> operator ""_hlp() {
+        return {};
+    }
   }
 }
