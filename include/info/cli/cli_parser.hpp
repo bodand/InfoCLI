@@ -80,6 +80,8 @@ namespace info::cli {
   struct cli_parser {
       template<class... Matchers>
       cli_parser(Matchers... ms) {
+          static_assert(sizeof...(ms) > 0,
+                        "cli_parser requires at least one option to parse");
           (boost::hana::for_each(
                  ms,
                  boost::hana::fuse([&](auto key, auto help, auto T, auto func) {
