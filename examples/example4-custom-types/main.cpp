@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     my_type type;
 
     // set-up parser
-    info::cli::cli_parser cli{
+    auto cli = info::cli::cli_parser::make(
            "i|input-file"_opt["The file to copy from"_hlp]->*inp,
            "o|output-file"_opt["The file to copy to"_hlp]->*outp,
 
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
              std::cout << '3' << std::endl;
              std::exit(1);
            }
-    };
+    )();
 
     // perform parsing
     std::vector<std::string_view> rem;

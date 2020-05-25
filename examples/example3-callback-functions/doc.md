@@ -14,11 +14,11 @@ You might have already drawn the conclusion: just use the functor you want to be
 instead of a variable. That's it.
 For example if I want to print out every input I can do the following:
 ```c++
-info::cli::cli_parser cli{
+auto cli = info::cli::cli_parser::make(
     "p|print"_opt->*[](auto inp) {
         std::cout << "given: " << inp;
     }
-};
+)();
 ```
  
 The requirements of the parameters of the callback: 
@@ -43,7 +43,7 @@ Again, we only need to modify the `cli_parser` construction, so let's just do th
 
 ```c++
 // set-up parser
-info::cli::cli_parser cli{
+auto cli = info::cli::cli_parser::make(
        "i|input-file"_opt["The file to copy from"_hlp]->*inp,
        "o|output-file"_opt["The file to copy to"_hlp]->*outp,
 
@@ -51,7 +51,7 @@ info::cli::cli_parser cli{
          std::cout << '3' << std::endl;
          std::exit(1);
        }
-};
+)();
 ```
 
 And again, we are done. The library does not support no-argument callbacks,
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     std::string outp;
 
     // set-up parser
-    info::cli::cli_parser cli{
+    auto cli = info::cli::cli_parser::make(
            "i|input-file"_opt["The file to copy from"_hlp]->*inp,
            "o|output-file"_opt["The file to copy to"_hlp]->*outp,
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
              std::cout << '3' << std::endl;
              std::exit(1);
            }
-    };
+    )();
 
     // perform parsing
     std::vector<std::string_view> rem;

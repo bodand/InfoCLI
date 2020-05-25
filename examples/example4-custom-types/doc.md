@@ -15,7 +15,7 @@ the lambda.
 This, however, is pretty meaningless work. Why write lambdas, if you can just rely
 on the library to call the functions/run the code you want?
 
-The only need to do is specialize the parser object. How? Read on.
+The only thing to do is specialize the parser object. How? Read on.
 
 The most important here is: `info::cli::type_parser<T>`. By default, the unspecialized
 version calls `operator>>` on your type. This, however, might not be desirable:
@@ -33,7 +33,7 @@ see the `docs/SpecializationEndpoints.md` file.
 
 ## Example
 
-Preface: Sorry, I can't think of a way to make this meaningful for our example, so
+Preface: Sorry, I can't think of a way to make this meaningful for our little copier, so
 just bear with the example.
 
 Let's say you want an option which, if defined, can never be set to the string
@@ -64,11 +64,11 @@ This'll allow the library to make sense of a callback that requires `my_type`, b
 it a variable, or a functor callback.
 
 That's it really, you don't need to do anything to make your type sensible for the library.
-Now you can just specify the, undocumented, feature of allowin the call to recieve the option 
+Now you can just specify the - undocumented - feature of allowing the call to receive the option 
 `--type`.
 
 This, as you should be used to now, only requires a change in the `cli_parser` construction.
-However, we'd like to use `my_type` as a variable so we also declare `my_type type` just below 
+However, we'd like to use `my_type` as a variable, so we also declare `my_type type` just below 
 the in/output strings:
 
 ```c++
@@ -77,7 +77,7 @@ std::string outp;
 my_type type;
 
 // set-up parser
-info::cli::cli_parser cli{
+auto cli = info::cli::cli_parser::make(
        "i|input-file"_opt["The file to copy from"_hlp]->*inp,
        "o|output-file"_opt["The file to copy to"_hlp]->*outp,
 
@@ -87,7 +87,7 @@ info::cli::cli_parser cli{
          std::cout << '3' << std::endl;
          std::exit(1);
        }
-};
+)();
 ```
 
 Now if we pass `not-my-type` to the `--type` parameter, the library will throw the exception
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
     my_type type;
 
     // set-up parser
-    info::cli::cli_parser cli{
+    auto cli = info::cli::cli_parser::make(
            "i|input-file"_opt["The file to copy from"_hlp]->*inp,
            "o|output-file"_opt["The file to copy to"_hlp]->*outp,
 
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
              std::cout << '3' << std::endl;
              std::exit(1);
            }
-    };
+    )();
 
     // perform parsing
     std::vector<std::string_view> rem;

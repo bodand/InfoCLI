@@ -28,10 +28,10 @@ to have the help messages `The file to copy from` and `The file to copy to` resp
 
 ```c++
 // set-up parser
-info::cli::cli_parser cli{
+auto cli = info::cli::cli_parser::make(
        "i|input-file"_opt["The file to copy from"_hlp]->*inp,
        "o|output-file"_opt["The file to copy to"_hlp]->*outp
-};
+)();
 ```
 
 With that our example is completed, as the auto-help will generate everything 
@@ -58,10 +58,10 @@ int main(int argc, char** argv) {
     std::string outp;
 
     // set-up parser
-    info::cli::cli_parser cli{
+    auto cli = info::cli::cli_parser::make(
            "i|input-file"_opt["The file to copy from"_hlp]->*inp,
            "o|output-file"_opt["The file to copy to"_hlp]->*outp
-    };
+    )();
 
     // perform parsing
     std::vector<std::string_view> rem;
