@@ -55,20 +55,6 @@ namespace info::cli::impl {
   using namespace boost::mp11;
 
   class split_ {
-      template<class T>
-      struct stringify_;
-
-      template<
-             class T,
-             T... Args
-      >
-      struct stringify_<hana::tuple<hana::integral_constant<T, Args>...>> {
-          using type = hana::string<Args...>;
-      };
-
-      template<class T>
-      using stringify = typename stringify_<T>::type;
-
       template<class S>
       using tuplify = decltype(hana::to_tuple(S{}));
 
@@ -79,15 +65,15 @@ namespace info::cli::impl {
                  mp_push_front<Tpl, hana::string<>>,
                  mp_append<
                         hana::tuple<
-                               stringify<mp_push_front<
-                                      tuplify<mp_eval_if<
+                               meta::cprepend<
+                                      mp_eval_if<
                                              mp_empty<Tpl>,
                                              hana::string<>,
                                              mp_front,
                                              Tpl
-                                      >>,
-                                      Ch
-                               >>
+                                      >,
+                                      Ch::value
+                               >
                         >,
                         meta::tail<Tpl>
                  >

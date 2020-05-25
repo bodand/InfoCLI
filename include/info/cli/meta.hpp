@@ -125,7 +125,7 @@ namespace info::cli::meta {
   template<class L, template<class> class F>
   using map = typename map_<L, F>::type;
 
-  // map_if ----------------------------------------------------------------------
+  // map_if -------------------------------------------------------------------
   template<class, template<class> class,
          template<class> class>
   struct map_if_;
@@ -150,4 +150,19 @@ namespace info::cli::meta {
          template<class> class F
   >
   using map_if = typename map_if_<L, P, F>::type;
+
+  // cprepend -----------------------------------------------------------------
+  template<auto C, class L>
+  struct cprepend_;
+
+  template<
+         template<auto...> class L, auto... Args,
+         auto C
+  >
+  struct cprepend_<C, L<Args...>> {
+      using type = L<C, Args...>;
+  };
+
+  template<class L, auto C>
+  using cprepend = typename cprepend_<C, L>::type;
 }

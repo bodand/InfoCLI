@@ -64,3 +64,11 @@ info::cli::impl::help_generator::print() const noexcept {
 void info::cli::impl::help_generator::set_name(std::string_view name) {
     _name = name;
 }
+
+void info::cli::impl::help_generator::register_(std::string_view opt,
+                                                std::string_view hlp) noexcept {
+    if (hlp.empty()) return; // undocumented opts are ignored
+
+    meaningful = true;
+    _helps[hlp.data()].add_opt(opt.data());
+}

@@ -35,10 +35,10 @@ include(Dependency)
 
 # Metaprogramming library
 GetDependency(
-        "Hana;Boost"
-        Git
-        https://github.com/ldionne/hana.git
-        v1.6.0
+        Hana
+        REPOSITORY_URL https://github.com/ldionne/hana.git
+        VERSION v1.6.0
+        FALLBACK Boost
 )
 if (GD_LAST_FOUND STREQUAL "Hana")
     set(HANA_LINK "hana")
@@ -48,10 +48,10 @@ endif ()
 
 # Metaprogramming library on the type-level
 GetDependency(
-        "boost_mp11;Boost"
-        Git
-        https://github.com/boostorg/mp11.git
-        v1.6.0
+        boost_mp11
+        REPOSITORY_URL https://github.com/boostorg/mp11.git
+        VERSION boost-1.73.0
+        FALLBACK Boost
 )
 if (GD_LAST_FOUND STREQUAL "boost_mp11")
     set(MP11_LINK "Boost::mp11")
@@ -62,9 +62,8 @@ endif ()
 # {fmt}
 GetDependency(
         fmt
-        Git
-        https://github.com/fmtlib/fmt.git
-        6.2.1
+        REPOSITORY_URL https://github.com/fmtlib/fmt.git
+        VERSION 6.2.1
 )
 
 # Info* project utilities
@@ -72,9 +71,8 @@ set(INFO_UTILS_BUILD_TESTS Off)
 # InfoUtils needs to disable tests when not main project
 GetDependency(
         InfoUtils
-        Git
-        https://github.com/isbodand/InfoUtils.git
-        v1.5.0
+        REPOSITORY_URL https://github.com/isbodand/InfoUtils.git
+        VERSION v1.5.0
 )
 
 # Test dependencies
@@ -82,10 +80,44 @@ if (INFO_CLI_BUILD_TESTS)
     # Catch2 testing framework
     GetDependency(
             Catch2
-            Git
-            https://github.com/catchorg/Catch2.git
-            v2.12.1
+            REPOSITORY_URL https://github.com/catchorg/Catch2.git
+            VERSION v2.12.1
     )
     # this is most likely implementation detail, if it acts up yell at me
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CACHEFILE_DIR}/_deps/catch2-src/contrib")
+endif ()
+
+# Benchmark dependencies
+if (INFO_CLI_BUILD_BENCHMARKS)
+    ## Boost.ProgramOptions
+    # Boost's answer to CLI parsing. A Boost-style, heavyweight,
+    # can even cook your dinner if you need it library
+    # Either depends on other parts of Boost, or just doesn't provide
+    # a CMake project as-is, so we need to pull in the whole thing
+    # fun times
+    GetDependency(
+            Boost
+            COMPONENTS program_options
+            REPOSITORY_URL https://github.com/boostorg/boost.git
+            VERSION v1.73.0
+    )
+
+    ## cxxopts
+    # CLI parser with a similar interface to Boost.ProgramOptions, but is
+    #  - header-only
+    #  - not part of Boost
+    #  - much lighter-weight
+    GetDependency(
+            cxxopts
+            REPOSITORY_URL https://github.com/jarro2783/cxxopts.git
+            VERSION v2.2.0
+    )
+
+    ## Celero
+    # Benchmarking library
+    GetDependency(
+            Celero
+            REPOSITORY_URL https://github.com/DigitalInBlue/Celero.git
+            VERSION v2.6.0
+    )
 endif ()

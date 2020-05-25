@@ -1,22 +1,22 @@
 //// BSD 3-Clause License
-// 
+//
 // Copyright (c) 2020, bodand
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its
 //    contributors may be used to endorse or promote products derived from
 //    this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -48,13 +48,8 @@ namespace info::cli::impl {
   struct help_generator {
       void print() const noexcept;
 
-      template<class OptStr, class HlpStr>
-      void register_(OptStr opt, HlpStr hlp) noexcept {
-          if (boost::hana::is_empty(hlp)) return; // undocumented opts are ignored
-
-          meaningful = true;
-          _helps[hlp.c_str()].add_opt(opt.c_str());
-      }
+      void register_(std::string_view opt,
+                     std::string_view hlp) noexcept;
 
       void set_name(std::string_view name);
 

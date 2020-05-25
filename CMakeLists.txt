@@ -49,6 +49,7 @@ endif ()
 
 option(INFO_CLI_BUILD_TESTS "Build the the InfoCLI test suite [Off as dependency]" ${INFO_CLI_MAIN})
 option(INFO_CLI_BUILD_EXAMPLES "Build the the InfoCLI usage examples [Off as dependency]" ${INFO_CLI_MAIN})
+option(INFO_CLI_BUILD_BENCHMARKS "Build the the InfoCLI benchmark [Off]" Off)
 option(INFO_CLI_BUILD_SHARED "Build the the InfoCLI as a shared library [On]" On)
 NameOption(${INFO_CLI_BUILD_SHARED} "SHARED;STATIC" INFO_CLI_BUILD_TYPE)
 
@@ -98,8 +99,8 @@ include(Dependencies)
 ## Get dependencies
 target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
                       PUBLIC info::utils
-                      PUBLIC ${HANA_LINK}
-                      PUBLIC ${MP11_LINK}
+                      PUBLIC ${Hana_LINK_AS}
+                      PUBLIC ${boost_mp11_LINK_AS}
                       PRIVATE fmt::fmt
                       )
 
@@ -112,10 +113,18 @@ target_include_directories(${${INFO_PROJECT_NAME}_TARGET}
 
 ## Optionally enable tests
 if (INFO_CLI_BUILD_TESTS)
+    message(STATUS "[InfoCLI] Building tests")
     add_subdirectory(test)
 endif ()
 
 ## Optionally enable examples
 if (INFO_CLI_BUILD_EXAMPLES)
+    message(STATUS "[InfoCLI] Building examples")
     add_subdirectory(examples)
+endif ()
+
+## Optionally enable benchmark
+if (INFO_CLI_BUILD_BENCHMARKS)
+    message(STATUS "[InfoCLI] Building benchmarks - are you sure you need this?")
+    add_subdirectory(benchmark)
 endif ()

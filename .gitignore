@@ -3,6 +3,7 @@
 
 ### Build dirs
 _build*/
+benchmark/data
 
 ### Configured values
 

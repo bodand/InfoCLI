@@ -96,7 +96,9 @@ namespace info::cli {
                >
         >
         // variable callbacks with a bare reference
-        INFO_CONSTEVAL auto operator->*(T& ref) const {
+        [[gnu::always_inline]]
+        INFO_CONSTEVAL
+        auto operator->*(T& ref) const {
             auto action = [&ref](const T& val) {
               ref = val;
             };
@@ -112,7 +114,9 @@ namespace info::cli {
         >
         // functor callback with a specified callback-type != string_view
         // hence we also do manual formatting
-        INFO_CONSTEVAL auto operator->*(Fun&& fun) const {
+        [[gnu::always_inline]]
+        INFO_CONSTEVAL
+        auto operator->*(Fun&& fun) const {
             using PassType = impl::dissect<std::remove_reference_t<Fun>>;
             static_assert(meta::size<PassType>::value == 1,
                           "The arity of the passed callback is not 1");
@@ -130,7 +134,9 @@ namespace info::cli {
         // generic functors => we can't perform manual formatting; or
         // string requesting functors => we needn't perform any formatting
         // hence we just pass the applicable string
-        INFO_CONSTEVAL auto operator->*(Fun fun) const {
+        [[gnu::always_inline]]
+        INFO_CONSTEVAL
+        auto operator->*(Fun fun) const {
             static_assert(std::is_invocable_v<Fun, std::string_view>,
                           "Passed functors must be callable with std::string_view");
 
@@ -152,7 +158,9 @@ namespace info::cli {
          boost::hana::string<>
   > {
       template<class StrT>
-      INFO_CONSTEVAL auto operator[](StrT) const {
+      [[gnu::always_inline]]
+      INFO_CONSTEVAL
+      auto operator[](StrT) const {
           return helpful_option_str<boost::hana::string<cs...>, StrT>{};
       }
   };
