@@ -6,6 +6,10 @@ project(InfoCLI_Benchmarks CXX)
 
 include(BenchmarkUtils)
 
+## Benchmark iteration
+option(INFO_CLI_BENCHMARK_SAMPLE "Amount of samples per benchmark case [100]" 100)
+message(STATUS "[InfoCLI>benchmark] Using ${INFO_CLI_BENCHMARK_SAMPLE} samples per benchmark case")
+
 ## Create benchmark datasets
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/data")
 set(CLI_BENCHMARK_SETS 10 20 50 100 200 283 500)

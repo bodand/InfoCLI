@@ -32,6 +32,14 @@
 // Created by bodand on 2020-05-21.
 //
 
+#cmakedefine INFO_CLI_BENCHMARK_SAMPLE ${INFO_CLI_BENCHMARK_SAMPLE}
+
+#ifdef INFO_CLI_BENCHMARK_SAMPLE
+#define BENCHMARK_SAMPLE_AMOUNT INFO_CLI_BENCHMARK_SAMPLE
+#else
+#define BENCHMARK_SAMPLE_AMOUNT 100
+#endif
+
 // SHARED STUFF
 #include <array>
 template<int>
@@ -55,7 +63,7 @@ static int b{};
 
 #include <stdexcept>
 
-BASELINE(option_parsers, gnu_getopt_long, 100, 0) {
+BASELINE(option_parsers, gnu_getopt_long, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<0>.size();
     char** argv = const_cast<char**>(Options<1>.data());
 
@@ -124,7 +132,7 @@ namespace po = boost::program_options;
 
 static po::options_description desc("opts");
 
-BENCHMARK(option_parsers, ProgramOptions, 100, 0) {
+BENCHMARK(option_parsers, ProgramOptions, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<1>.size();
     char** argv = const_cast<char**>(Options<1>.data());
 
@@ -139,7 +147,7 @@ namespace cxo = cxxopts;
 
 static cxo::Options opts("opts");
 
-BENCHMARK(option_parsers, cxxopts, 100, 0) {
+BENCHMARK(option_parsers, cxxopts, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<2>.size();
     char** argv = const_cast<char**>(Options<2>.data());
 
@@ -159,7 +167,7 @@ static auto cli = ic::cli_parser::make(
        "option-9999"_opt["more help -- 9999"_hlp]->*b<3>
 )();
 
-BENCHMARK(option_parsers, InfoCLI, 100, 0) {
+BENCHMARK(option_parsers, InfoCLI, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<3>.size();
     char** argv = const_cast<char**>(Options<3>.data());
 
