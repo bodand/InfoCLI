@@ -49,49 +49,34 @@ void info::cli::cli_parser::finish_all(int argc,
 void info::cli::cli_parser::handle_long_opt(std::string_view arg, int argc, char** argv, int& i) {
     auto[opt, val] = impl::split(arg);
 
-    // "--opt=val"
-    if (!val.empty()) {
-        auto iter = _val.find(opt);
-        if (iter == _val.end()) {
-            _error("Unexpected option found: " + opt +
-                   (_has_help ? ". Use --help for usage." : "."));
-            return;
-        }
-        auto&[__, fn] = iter->second;
+    // filter unexpected opts
+    auto iter = _val.find(opt);
+    if (__builtin_expect(iter == _val.end(), 0)) {
+        _error("Unexpected option found: " + opt +
+               (_has_help ? ". Use --help for usage." : "."));
+        return;
+    }
+    auto&[data, fn] = iter->second;
+
+    if ((!val.empty())          // "--opt=val"
+        || arg.back() == '=') { // "--opt="
         fn(val);
         return;
     }
 
-    // "--opt="
-    if (arg.back() == '=') {
-        auto iter = _val.find(opt);
-        auto&[__, fn] = iter->second;
-        fn("");
-        return;
-    }
-
     // "--opt" => opt = arg
-    if (auto iter = _val.find(opt);
-           iter != _val.end()) {
-        auto&[data, fn] = iter->second;
-
-        if (data.allow_nothing) { // "--opt"
-            fn(data.default_val);
-            return;
-        }
-
-        if (i + 1 < argc) { // "--opt" "val"
-            ++i;
-            fn(argv[i]);
-            return;
-        }
-        _error("Expected value after encountering option: " +
-               opt + ". But found end of input." +
-               (_has_help ? " Use --help for usage." : ""));
+    if (__builtin_expect(data.allow_nothing, 0)) { // "--opt"
+        fn(data.default_val);
         return;
     }
-    _error("Unexpected option found: " + opt +
-           (_has_help ? ". Use --help for usage." : "."));
+
+    if (__builtin_expect(i + 1 < argc, 1)) { // "--opt" "val"
+        ++i;
+        fn(argv[i]);
+        return;
+    }
+    _error("Expected value after encountering option: " + opt + ". But found end of input." +
+           (_has_help ? ". Use --help for usage." : ""));
 }
 
 void info::cli::cli_parser::handle_short_opt(std::string_view arg,
@@ -105,7 +90,7 @@ void info::cli::cli_parser::handle_short_opt(std::string_view arg,
                it != _val.end()) {
             auto&[data, fn] = it->second;
 
-            if (data.allow_nothing) { // -ab -> -a
+            if (__builtin_expect(data.allow_nothing, 0)) { // -ab -> -a
                 fn(data.default_val);
                 continue;
             }
