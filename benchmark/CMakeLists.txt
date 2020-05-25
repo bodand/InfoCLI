@@ -6,6 +6,15 @@ project(InfoCLI_Benchmarks CXX)
 
 include(BenchmarkUtils)
 
+## Fix Celero bug with _declspec
+if (NOT EXISTS "${CMAKE_BINARY_DIR}/celero.fixed")
+    file(READ "${CMAKE_BINARY_DIR}/_deps/celero-src/include/celero/Export.h" ExportFile)
+    FixCeleroDeclspec("${ExportFile}" FixedExportFile)
+    file(WRITE "${CMAKE_BINARY_DIR}/_deps/celero-src/include/celero/Export.h" "${FixedExportFile}")
+
+    file(TOUCH "${CMAKE_BINARY_DIR}/celero.fixed")
+endif ()
+
 ## Benchmark iteration
 option(INFO_CLI_BENCHMARK_SAMPLE "Amount of samples per benchmark case [100]" 100)
 message(STATUS "[InfoCLI>benchmark] Using ${INFO_CLI_BENCHMARK_SAMPLE} samples per benchmark case")
@@ -66,8 +75,8 @@ foreach (BENCHMARK_NUMBER IN LISTS CLI_BENCHMARK_SETS)
                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:celero> "${CMAKE_CURRENT_BINARY_DIR}"
                        )
 
-#    set_target_properties("cli-bench-${BENCHMARK_NUMBER}"
-#                          PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    #    set_target_properties("cli-bench-${BENCHMARK_NUMBER}"
+    #                          PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 endforeach ()
 
 

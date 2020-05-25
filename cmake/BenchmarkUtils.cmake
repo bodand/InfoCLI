@@ -19,3 +19,8 @@ function(GnuData N oLine oHelp oCheck)
     set(${oHelp} "\"some help -- ${N}\"," PARENT_SCOPE)
     set(${oCheck} "if (strcmp(opts[opt_idx].name, \"option-${N}\") == 0) {a<${N}> = atoi(optarg);}" PARENT_SCOPE)
 endfunction()
+
+function(FixCeleroDeclspec FileData oFixedData)
+    string(REGEX REPLACE _declspec __declspec replaced "${FileData}")
+    set(${oFixedData} "${replaced}" PARENT_SCOPE)
+endfunction()
