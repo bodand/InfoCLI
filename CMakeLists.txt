@@ -30,6 +30,8 @@
 
 if (MSVC)
     message(FATAL_ERROR "MSVC is not supported. Be a better person and use Clang or GCC. Thank you.")
+    # note that removing this to get access will not get you far, as MSVC will fail to compile
+    # the GNU extension this library is literally based around
 endif ()
 
 ## CMake shenanigans

@@ -11,6 +11,21 @@ parsing.
 The API is different, as now we have different design goals, but the main design 
 decision is still the same: have it look like Perl's `Getopt::Long` as much as possible.  
 
+## DISCLAIMER
+If you have a lot of options to check, this library is not the best choice you can make.
+While I worked very hard to not make it so, the compile-times are horrendous.
+Up to 100 options is doable, as if you were compiling something using Boost.Spirit, 
+200 is risque, and more is only advised if you can make absolutely sure, 
+that one file that contains the cli_parser creation is only compiled *once*,
+and only in really rare cases. 
+Even then, use something else.
+With 500 options I have around 1 hour long compilations for 1 file. You can try it
+in the benchmarks if you don't believe me: pass `INFO_CLI_BUILD_BENCHMARKS` to cmake 
+then build the target `cli-bench-500`.
+
+Also, note that the compilers **will** take up RAM. Clang seems to use more on my
+machine, but that may vary, as I'm running Windows & the MSYS2 MinGW install of both compilers.
+
 ## MSVC
 
 MSVC does not support this GNU extension, nor anything equal:

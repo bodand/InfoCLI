@@ -40,11 +40,6 @@ GetDependency(
         VERSION v1.6.0
         FALLBACK Boost
 )
-if (GD_LAST_FOUND STREQUAL "Hana")
-    set(HANA_LINK "hana")
-else ()
-    set(HANA_LINK "Boost::boost")
-endif ()
 
 # Metaprogramming library on the type-level
 GetDependency(
@@ -53,11 +48,6 @@ GetDependency(
         VERSION boost-1.73.0
         FALLBACK Boost
 )
-if (GD_LAST_FOUND STREQUAL "boost_mp11")
-    set(MP11_LINK "Boost::mp11")
-else ()
-    set(MP11_LINK "Boost::boost")
-endif ()
 
 # {fmt}
 GetDependency(

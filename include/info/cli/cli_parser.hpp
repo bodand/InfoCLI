@@ -52,6 +52,9 @@
 #include <info/_macros.hpp>
 #include <info/functor.hpp>
 
+// parallel map
+#include "parallel_hashmap/phmap.h"
+
 // project
 #include "type_data.hpp"
 #include "error_reporter.hpp"
@@ -130,7 +133,7 @@ namespace info::cli {
           return mk_callback_impl(key.c_str(), help.c_str(), T, func);
       }
 
-      using map_type = std::unordered_map<std::string, impl::typed_callback>;
+      using map_type = phmap::flat_hash_map<std::string, impl::typed_callback>;
 
       template<std::size_t N>
       cli_parser(const std::array<std::function<void(map_type&, impl::help_generator&)>, N>&& regs) {
@@ -207,7 +210,7 @@ namespace info::cli {
                             int i);
 
       static error_reporter<> _error;
-      std::unordered_map<std::string, impl::typed_callback> _val;
+      map_type _val;
       impl::help_generator _help;
       bool _has_help;
   };
