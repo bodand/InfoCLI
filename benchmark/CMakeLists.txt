@@ -6,19 +6,6 @@ project(InfoCLI_Benchmarks CXX)
 
 include(BenchmarkUtils)
 
-## Fix Celero bug with _declspec
-if (NOT EXISTS "${CMAKE_BINARY_DIR}/celero.fixed")
-    file(READ "${CMAKE_BINARY_DIR}/_deps/celero-src/include/celero/Export.h" ExportFile)
-    FixCeleroDeclspec("${ExportFile}" FixedExportFile)
-    file(WRITE "${CMAKE_BINARY_DIR}/_deps/celero-src/include/celero/Export.h" "${FixedExportFile}")
-
-    file(TOUCH "${CMAKE_BINARY_DIR}/celero.fixed")
-endif ()
-
-## Benchmark iteration
-option(INFO_CLI_BENCHMARK_SAMPLE "Amount of samples per benchmark case [100]" 100)
-message(STATUS "[InfoCLI>benchmark] Using ${INFO_CLI_BENCHMARK_SAMPLE} samples per benchmark case")
-
 ## Create benchmark datasets
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/data")
 set(CLI_BENCHMARK_SETS 10 20 50 100 200 283 500)
@@ -66,17 +53,20 @@ foreach (BENCHMARK_NUMBER IN LISTS CLI_BENCHMARK_SETS)
                           Boost::boost Boost::program_options
                           info::cli
                           cxxopts
-                          celero
+                          benchmark benchmark_main # benchmark::benchmark does not exist
                           )
 
     add_custom_command(TARGET "cli-bench-${BENCHMARK_NUMBER}" POST_BUILD
                        COMMENT "Copying shared objects for 'cli-bench-${BENCHMARK_NUMBER}'"
                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:info::cli> "${CMAKE_CURRENT_BINARY_DIR}"
-                       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:celero> "${CMAKE_CURRENT_BINARY_DIR}"
+                       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:benchmark> "${CMAKE_CURRENT_BINARY_DIR}"
                        )
 
-    #    set_target_properties("cli-bench-${BENCHMARK_NUMBER}"
-    #                          PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # GCC's LTO optimizes the benchmarks away
+        set_target_properties("cli-bench-${BENCHMARK_NUMBER}"
+                              PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif ()
 endforeach ()
 
 

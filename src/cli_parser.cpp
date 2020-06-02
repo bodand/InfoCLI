@@ -36,6 +36,10 @@
 #include <vector>
 #include <filesystem>
 
+// {fmt}
+#include <fmt/format.h>
+
+// project
 #include <info/cli/cli_parser.hpp>
 
 void info::cli::cli_parser::finish_all(int argc,
@@ -52,8 +56,9 @@ void info::cli::cli_parser::handle_long_opt(std::string_view arg, int argc, char
     // filter unexpected opts
     auto iter = _val.find(opt);
     if (__builtin_expect(iter == _val.end(), 0)) {
-        _error("Unexpected option found: " + opt +
-               (_has_help ? ". Use --help for usage." : "."));
+        _error(fmt::format("Unexpected option found: {}{}",
+                           opt,
+                           (_has_help ? ". Use --help for usage." : ".")));
         return;
     }
     auto&[data, fn] = iter->second;
@@ -75,8 +80,9 @@ void info::cli::cli_parser::handle_long_opt(std::string_view arg, int argc, char
         fn(argv[i]);
         return;
     }
-    _error("Expected value after encountering option: " + opt + ". But found end of input." +
-           (_has_help ? ". Use --help for usage." : ""));
+    _error(fmt::format("Expected value after encountering option: {}. But found end of input{}",
+                       opt,
+                       (_has_help ? ". Use --help for usage." : ".")));
 }
 
 void info::cli::cli_parser::handle_short_opt(std::string_view arg,
@@ -155,7 +161,8 @@ info::cli::cli_parser::operator()(int argc, char** argv) {
         std::string_view arg{argv[i]};
 
         // filter end of options
-        if (__builtin_expect(arg == "--", 0)) {
+        if (__builtin_expect(
+               std::memcmp("--", arg.data(), 2) == 0, 0)) {
             finish_all(argc, argv, ret, i);
             return ret;
         }

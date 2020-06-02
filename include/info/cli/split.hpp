@@ -42,5 +42,5 @@
 namespace info::cli::impl {
   // note that this thing's purpose is to break the string into **2** parts
   // it was not out of my idiocy to implement this as such
-  std::array<std::string, 2> split(std::string_view str, std::string_view delim = "=");
+  std::array<std::string_view, 2> split(std::string_view str, std::string_view delim = "=");
 }

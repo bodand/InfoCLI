@@ -28,7 +28,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include(CTest)
 include(Catch)
 
 project(InfoCLI_Test CXX)
@@ -41,7 +40,7 @@ add_executable(cli_test
                test.option.cpp
                test.split.cpp
                test.cli_parser.cpp
-               test.type_parser.cpp)
+               test.type_parser.cpp test.fstrcmp.cpp)
 
 target_link_libraries(cli_test
                       PUBLIC info::cli

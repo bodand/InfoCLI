@@ -56,8 +56,15 @@ GetDependency(
         VERSION 6.2.1
 )
 
+# DarkCity
+GetDependency(
+        DarkCity
+        REPOSITORY_URL https://github.com/isbodand/DarkCity.git
+        VERSION v1.0.1
+)
+
 # Info* project utilities
-set(INFO_UTILS_BUILD_TESTS Off)
+set(INFO_UTILS_BUILD_TESTS Off CACHE BOOL "<option>" FORCE)
 # InfoUtils needs to disable tests when not main project
 GetDependency(
         InfoUtils
@@ -103,11 +110,15 @@ if (INFO_CLI_BUILD_BENCHMARKS)
             VERSION v2.2.0
     )
 
-    ## Celero
+    ## gbenchmark
     # Benchmarking library
+    set(BENCHMARK_ENABLE_INSTALL Off CACHE BOOL "<option>" FORCE)
+    set(BENCHMARK_ENABLE_TESTING Off CACHE BOOL "<option>" FORCE)
+    set(BENCHMARK_ENABLE_GTEST_TESTS Off CACHE BOOL "<option>" FORCE)
     GetDependency(
-            Celero
-            REPOSITORY_URL https://github.com/DigitalInBlue/Celero.git
-            VERSION v2.6.0
+            benchmark
+            REPOSITORY_URL https://github.com/google/benchmark.git
+            VERSION v1.5.0
     )
+    target_compile_options(benchmark PUBLIC $<$<CXX_COMPILER_ID:GNU>:-Wno-error=deprecated-declarations>)
 endif ()

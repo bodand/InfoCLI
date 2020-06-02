@@ -41,6 +41,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
 include(Utils)
+include(CMakeDependentOption)
 
 ## Project options
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -52,8 +53,10 @@ endif ()
 option(INFO_CLI_BUILD_TESTS "Build the the InfoCLI test suite [Off as dependency]" ${INFO_CLI_MAIN})
 option(INFO_CLI_BUILD_EXAMPLES "Build the the InfoCLI usage examples [Off as dependency]" ${INFO_CLI_MAIN})
 option(INFO_CLI_BUILD_BENCHMARKS "Build the the InfoCLI benchmark [Off]" Off)
-option(INFO_CLI_BUILD_SHARED "Build the the InfoCLI as a shared library [On]" On)
+cmake_dependent_option(INFO_CLI_BUILD_SHARED "Build the the InfoCLI as a shared library [!INFO_CLI_BUILD_BENCHMARKS]" On
+                       "NOT INFO_CLI_BUILD_BENCHMARKS" Off)
 NameOption(${INFO_CLI_BUILD_SHARED} "SHARED;STATIC" INFO_CLI_BUILD_TYPE)
+message(STATUS "[InfoCLI] Building as ${INFO_CLI_BUILD_TYPE} library")
 
 ## Project
 project(InfoCLI
@@ -78,7 +81,9 @@ add_library(${${INFO_PROJECT_NAME}_TARGET} ${INFO_CLI_BUILD_TYPE}
             src/split.cpp
             src/cli_parser.cpp
             src/type_parser.cpp
-            src/help_generator.cpp)
+            src/help_generator.cpp
+            src/fstrcmp.cpp
+            )
 add_library(${INFO_PROJECT_NAMESPACE} ALIAS ${${INFO_PROJECT_NAME}_TARGET})
 
 ## Require C++17
@@ -104,6 +109,7 @@ target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
                       PUBLIC ${Hana_LINK_AS}
                       PUBLIC ${boost_mp11_LINK_AS}
                       PRIVATE fmt::fmt
+                      PUBLIC dark_city::dark_city
                       )
 
 ## Set target properties
@@ -115,6 +121,8 @@ target_include_directories(${${INFO_PROJECT_NAME}_TARGET}
 
 ## Optionally enable tests
 if (INFO_CLI_BUILD_TESTS)
+    include(CTest)
+
     message(STATUS "[InfoCLI] Building tests")
     add_subdirectory(test)
 endif ()

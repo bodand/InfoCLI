@@ -83,8 +83,8 @@ namespace info::cli {
   }
 
   class cli_parser {
-      auto mk_help_callback() const
-      __attribute__((always_inline)) {
+      [[gnu::always_inline]]
+      auto mk_help_callback() const {
           return [this](std::string_view arg) {
             auto parsed = type_parser<bool>{}(arg);
 
@@ -133,7 +133,7 @@ namespace info::cli {
           return mk_callback_impl(key.c_str(), help.c_str(), T, func);
       }
 
-      using map_type = phmap::flat_hash_map<std::string, impl::typed_callback>;
+      using map_type = phmap::flat_hash_map<std::string_view, impl::typed_callback>;
 
       template<std::size_t N>
       cli_parser(const std::array<std::function<void(map_type&, impl::help_generator&)>, N>&& regs) {
@@ -155,15 +155,14 @@ namespace info::cli {
               });
           }
 
-          _has_help = _val.find("help") != _val.end();
+          _has_help = _val.find("--help") != _val.end();
       }
 
       template<std::size_t N>
       INFO_CONSTEVAL static auto mk_maker(
              std::array<std::function<void(map_type&, impl::help_generator&)>, N> arr
       ) {
-          return [arr{std::move(arr)}]()
-                 __attribute__((flatten)) {
+          return [arr{std::move(arr)}]() {
             return cli_parser(std::move(arr));
           };
       }
@@ -184,7 +183,7 @@ namespace info::cli {
           (boost::hana::for_each(
                  ms,
                  boost::hana::fuse([&](auto key, auto help, auto T, auto func)
-                                          [[gnu::flatten]] {
+                                          __attribute__((flatten)) {
                    arr[i++] = mk_callback(key, help, T, func);
                  })
           ), ...);

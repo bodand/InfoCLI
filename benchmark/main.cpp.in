@@ -32,14 +32,6 @@
 // Created by bodand on 2020-05-21.
 //
 
-#cmakedefine INFO_CLI_BENCHMARK_SAMPLE ${INFO_CLI_BENCHMARK_SAMPLE}
-
-#ifdef INFO_CLI_BENCHMARK_SAMPLE
-#define BENCHMARK_SAMPLE_AMOUNT INFO_CLI_BENCHMARK_SAMPLE
-#else
-#define BENCHMARK_SAMPLE_AMOUNT 100
-#endif
-
 // SHARED STUFF
 #include <array>
 template<int>
@@ -53,17 +45,14 @@ static int a{};
 template<int>
 static int b{};
 
-#include <celero/Celero.h>
+#include <benchmark/benchmark.h>
 
-// getops_long /////////////////////////////////////////////////////////////////
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+// getopt_long /////////////////////////////////////////////////////////////////
 #include <getopt.h>
+#include <cstdio>
+#include <cstring>
 
-#include <stdexcept>
-
-BASELINE(option_parsers, gnu_getopt_long, BENCHMARK_SAMPLE_AMOUNT, 0) {
+void _getopt_long(benchmark::State& state) {
     int argc = Options<0>.size();
     char** argv = const_cast<char**>(Options<1>.data());
 
@@ -86,7 +75,7 @@ BASELINE(option_parsers, gnu_getopt_long, BENCHMARK_SAMPLE_AMOUNT, 0) {
       std::exit(1);
     };
 
-    auto handle = [&]() {
+    auto handle = [&help, &opt_idx](auto argc, auto argv) {
       int opt;
       std::vector<std::string_view> pos_args;
 
@@ -123,70 +112,76 @@ BASELINE(option_parsers, gnu_getopt_long, BENCHMARK_SAMPLE_AMOUNT, 0) {
       return pos_args;
     };
 
-    celero::DoNotOptimizeAway(handle());
+    for (auto _ : state) {
+        auto ret = handle(argc, argv);
+        benchmark::DoNotOptimize(ret);
+    }
 }
+
 
 // Boost.ProgramOptions ////////////////////////////////////////////////////////
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-static po::options_description desc("opts");
+void _boost_program_options(benchmark::State& state) {
+    po::options_description desc("opts");
+    desc.add_options()
+               ("help", "print help")
+#include "data/${BENCHMARK_NUMBER}.boost.txt"
+               ("option-9999", po::value<int>(&b<1>), "more help -- 9999");
 
-BENCHMARK(option_parsers, ProgramOptions, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<1>.size();
     char** argv = const_cast<char**>(Options<1>.data());
 
-    celero::DoNotOptimizeAway(
-           po::parse_command_line(argc, argv, desc)
-    );
+    for (auto _ : state) {
+        auto ret = po::parse_command_line(argc, argv, desc);
+        benchmark::DoNotOptimize(ret);
+    }
 }
 
 // cxxopts /////////////////////////////////////////////////////////////////////
 #include <cxxopts.hpp>
 namespace cxo = cxxopts;
 
-static cxo::Options opts("opts");
+void _cxxopts(benchmark::State& state) {
+    cxo::Options opts("opts");
+    opts.add_options()
+               ("h,help", "print help")
+#include "data/${BENCHMARK_NUMBER}.cxxopts.txt"
+               ("option-9999", "some help -- 9999", cxo::value<int>(b<2>));
 
-BENCHMARK(option_parsers, cxxopts, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<2>.size();
     char** argv = const_cast<char**>(Options<2>.data());
 
-    celero::DoNotOptimizeAway(
-           opts.parse(argc, argv)
-    );
+    for (auto _ : state) {
+        auto ret = opts.parse(argc, argv);
+        benchmark::DoNotOptimize(ret.arguments().size());
+    }
 }
-
 
 // info CLI ////////////////////////////////////////////////////////////////////
 #include <info/cli.hpp>
 using namespace info::cli::literals;
 namespace ic = info::cli;
 
-static auto cli = ic::cli_parser::make(
+void _info_cli(benchmark::State& state) {
+    auto cli = ic::cli_parser::make(
 #include "data/${BENCHMARK_NUMBER}.info.txt"
-       "option-9999"_opt["more help -- 9999"_hlp]->*b<3>
-)();
+           "option-9999"_opt["more help -- 9999"_hlp]->*b<3>
+    )();
 
-BENCHMARK(option_parsers, InfoCLI, BENCHMARK_SAMPLE_AMOUNT, 0) {
     int argc = Options<3>.size();
     char** argv = const_cast<char**>(Options<3>.data());
 
-    celero::DoNotOptimizeAway(
-           cli(argc, argv)
-    );
+    for (auto _ : state) {
+        auto ret = cli(argc, argv);
+        benchmark::DoNotOptimize(ret);
+    }
 }
 
-int main(int argc, char** argv) {
-    desc.add_options()
-               ("help", "print help")
-#include "data/${BENCHMARK_NUMBER}.boost.txt"
-               ("option-9999", po::value<int>(&b<1>), "more help -- 9999");
 
-    opts.add_options()
-               ("h,help", "print help")
-#include "data/${BENCHMARK_NUMBER}.cxxopts.txt"
-               ("option-9999", "some help -- 9999", cxo::value<int>(b<2>));
+BENCHMARK(_getopt_long);
+BENCHMARK(_boost_program_options);
+BENCHMARK(_cxxopts);
+BENCHMARK(_info_cli);
 
-    celero::Run(argc, argv);
-    return 0;
-}
