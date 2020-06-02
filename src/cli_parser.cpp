@@ -162,7 +162,7 @@ info::cli::cli_parser::operator()(int argc, char** argv) {
 
         // filter end of options
         if (__builtin_expect(
-               std::memcmp("--", arg.data(), 2) == 0, 0)) {
+               std::memcmp("--", arg.data(), 3) == 0, 0)) {
             finish_all(argc, argv, ret, i);
             return ret;
         }
