@@ -82,7 +82,6 @@ add_library(${${INFO_PROJECT_NAME}_TARGET} ${INFO_CLI_BUILD_TYPE}
             src/cli_parser.cpp
             src/type_parser.cpp
             src/help_generator.cpp
-            src/fstrcmp.cpp
             )
 add_library(${INFO_PROJECT_NAMESPACE} ALIAS ${${INFO_PROJECT_NAME}_TARGET})
 

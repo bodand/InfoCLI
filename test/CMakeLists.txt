@@ -40,7 +40,7 @@ add_executable(cli_test
                test.option.cpp
                test.split.cpp
                test.cli_parser.cpp
-               test.type_parser.cpp test.fstrcmp.cpp)
+               test.type_parser.cpp)
 
 target_link_libraries(cli_test
                       PUBLIC info::cli
