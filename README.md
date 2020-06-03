@@ -41,3 +41,48 @@ constexpr option_str<char, cs...> operator""_opt() {
 "asd"_opt;
 ```
 In turn, we respect its decision by not supporting MSVC.
+
+## Usage
+
+The most basic example is as follows, where a basic compiler is modelled.
+It takes `-o` or `--output` to specify how to call the output, and `-O` to
+specify optimization level. 
+The actual compiler parts are omitted, of course.
+```c++
+// stdlib
+#include <string>
+#include <exception>
+#include <iostream>
+
+// info::cli
+#include <info/cli.hpp>
+using namespace info::cli::literals;
+
+// project
+#include <compiler/compiler.hpp>
+
+int main(int argc, char** argv) {
+    std::string exec_name;
+    int optlvl;    
+
+    auto cli = info::cli_parser::make(
+        "o|output"_opt["The output executable's name"_hlp]->*exec_name,
+        "O"_opt["The optimization's level"]->*optlvl      
+    )();
+    
+    std::vector<std::string_view> args;
+    try {
+        args = cli(argc, argv);
+    } catch(const std::exception& ex) {
+        std::cout << "encountered error while parsing input arguments: " << ex.what() << std::endl;
+        return -1;
+    }
+    
+    compiler comp{args};
+    comp.compile(exec_name, optlvl);
+    
+    return 0;
+}
+```
+
+For more usage examples and tutorial see the examples/ subdirectory.
