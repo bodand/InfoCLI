@@ -37,7 +37,7 @@
 #include <filesystem>
 
 // {fmt}
-#include <fmt/format.h>
+#include "fmt.hpp"
 
 // project
 #include <info/cli/cli_parser.hpp>

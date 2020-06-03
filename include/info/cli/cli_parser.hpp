@@ -53,7 +53,7 @@
 #include <info/functor.hpp>
 
 // parallel map
-#include "parallel_hashmap/phmap.h"
+#include "phmap.hpp"
 
 // project
 #include "type_data.hpp"
@@ -191,7 +191,7 @@ namespace info::cli {
           return mk_maker(std::move(arr));
       }
 
-      INFO_NODISCARD("Return value is the remaining non-option values in the input args")
+      INFO_NODISCARD_JUST//("Return value is the remaining non-option values in the input args")
       std::vector<std::string_view>
       operator()(int argc, char** argv);
 
