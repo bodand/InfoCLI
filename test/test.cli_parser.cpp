@@ -254,3 +254,15 @@ TEST_CASE("auto-help is generated properly", "[cli_parser][auto-help][api]") {
     CHECK_NOTHROW(ret = cli(args.size(), const_cast<char**>(args.data())));
 }
 
+TEST_CASE("cli_parser handles aggregating types correctly", "[cli_parser][aggregating_types][api]") {
+    std::vector<std::string> warns;
+    auto cli = cli_parser::make(
+           "W"_opt["Warnings to set"_hlp]->*warns
+    )();
+    auto args = std::array{"a.out", "-Wsome", "text", "-Wother", "-Wwarning", "-Werror"};
+
+    (void) cli(args.size(), const_cast<char**>(args.data()));
+
+    std::vector<std::string> exp{"some", "other", "warning", "error"};
+    CHECK_THAT(warns, Catch::Equals(exp));
+}

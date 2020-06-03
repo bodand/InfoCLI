@@ -52,6 +52,7 @@
 #include "meta.hpp"
 #include "dissector.hpp"
 #include "meta_split.hpp"
+#include "aggregator.hpp"
 
 namespace info::cli {
   namespace impl {
@@ -99,11 +100,17 @@ namespace info::cli {
         [[gnu::always_inline]]
         INFO_CONSTEVAL
         auto operator->*(T& ref) const {
-            auto action = [&ref](const T& val) {
-              ref = val;
+            using taken_type = meta::aggregating_type<T>;
+
+            auto action = [&ref](const taken_type& val) {
+              if constexpr (meta::is_aggregating<T>) {
+                  aggregator<T>(ref, val);
+              } else {
+                  ref = val;
+              }
             };
 
-            return mk_matcher<T>(action, strs);
+            return mk_matcher<taken_type>(action, strs);
         }
 
         template<class Fun,

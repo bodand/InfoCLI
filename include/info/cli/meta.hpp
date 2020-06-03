@@ -36,6 +36,11 @@
 
 // stdlib
 #include <type_traits>
+#include <vector>
+#include <list>
+#include <stack>
+#include <deque>
+#include <queue>
 
 namespace info::cli::meta {
   template<class... Args>
@@ -165,4 +170,41 @@ namespace info::cli::meta {
 
   template<class L, auto C>
   using cprepend = typename cprepend_<C, L>::type;
+
+  // is_aggregating -----------------------------------------------------------
+  template<class T>
+  struct is_aggregating_ : std::false_type {
+      using type = T;
+  };
+
+  template<class T>
+  struct is_aggregating_<std::vector<T>> : std::true_type {
+      using type = T;
+  };
+
+  template<class T>
+  struct is_aggregating_<std::list<T>> : std::true_type {
+      using type = T;
+  };
+
+  template<class T>
+  struct is_aggregating_<std::stack<T>> : std::true_type {
+      using type = T;
+  };
+
+  template<class T>
+  struct is_aggregating_<std::queue<T>> : std::true_type {
+      using type = T;
+  };
+
+  template<class T>
+  struct is_aggregating_<std::deque<T>> : std::true_type {
+      using type = T;
+  };
+
+  template<class T>
+  constexpr static bool is_aggregating = is_aggregating_<T>::value;
+
+  template<class T>
+  using aggregating_type = typename is_aggregating_<T>::type;
 }
