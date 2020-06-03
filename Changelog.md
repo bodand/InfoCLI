@@ -20,6 +20,22 @@ Format: *major*.*minor*.*patch*
  New *patch* updates are represented in the codename by concatenating the patch
  version + 1 to the end with a dash eg. 'Daedalus-2' for InfoUtils `v1.3.1`.
 
+## VERSION 1.0.0 - Hydrogen
+
+### Added:
+ - Option DSL
+ - Reference callbacks
+ - Function callbacks
+ - Aggregating types
+ - User-defined callback types
+ - Auto-help
+ 
+### Changed: 
+ None
+ 
+### Removed:
+ None
+
 ## VERSION 0.1.0
 
 ### Added:
