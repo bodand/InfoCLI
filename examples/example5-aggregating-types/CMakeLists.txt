@@ -28,16 +28,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-project(InfoCLI_Example4 CXX)
+project(InfoCLI_Example5 CXX)
 
-add_executable(cli-ex4
-               main.cpp my_type.cpp)
+add_executable(cli-ex5
+               main.cpp)
 
-target_link_libraries(cli-ex4
+target_link_libraries(cli-ex5
                       info::cli)
 
 if (INFO_CLI_BUILD_SHARED)
-    add_custom_command(TARGET cli-ex4 POST_BUILD
+    add_custom_command(TARGET cli-ex5 POST_BUILD
                        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:info::cli>" ${PROJECT_BINARY_DIR}
                        COMMENT "Copy icli shared object to working directory of executable")
 endif ()
