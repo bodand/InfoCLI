@@ -1,0 +1,204 @@
+/** InfoCLI project
+ * Copyright (c) 2020 bodand
+ * Licensed under the BSD 3-Clause license
+ *
+ * Benchmark for cli parsing non-gnu long options
+ */
+
+// SHARED STUFF
+#include <array>
+template<int>
+constexpr static auto Options = std::array{
+       "a.out",
+#include "data/@BENCHMARK_NUMBER@.input.gnu.txt"
+       "--option-9999=5"};
+template<int>
+static int a{};
+template<int>
+static int b{};
+
+#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_ENABLE_BENCHMARKING
+#include <catch2/catch.hpp>
+
+#include <getopt-compat.hxx>
+
+#include <boost/program_options.hpp>
+#include <cxxopts.hpp>
+#include <info/cli.hxx>
+#if INFO_CLI_HAS_HEADER_GETOPT_H
+#    include <getopt.h>
+#endif
+
+namespace po = boost::program_options;
+namespace cxo = cxxopts;
+namespace ic = info::cli;
+using namespace info::cli::udl;
+
+// I don't really know what's happening here:
+// cxxopts randomly errors if given const char** on MSVC
+#ifdef _MSC_VER
+#    define ARGV_CXXOPTS_CAST(x) const_cast<char**>((x))
+#else
+#    define ARGV_CXXOPTS_CAST(x) const_cast<const char**>((x))
+#endif
+
+#if INFO_CLI_HAS_GETOPT_LONG
+// getopt random stuff /////////////////////////////////////////////////////////
+static option long_opts[] = {// clang-format off
+       {"help",        no_argument,       nullptr, 0},
+#    include "data/@BENCHMARK_NUMBER@.gnu.opt.txt"
+       {"option-9999", required_argument, nullptr, 0},
+       {nullptr,       0,                 nullptr, 0}};
+// clang-format on
+static auto helps = std::array{
+#    include "data/@BENCHMARK_NUMBER@.gnu.help.txt"
+       "more help -- 9999"};
+
+[[noreturn]] void
+help() {
+    for (std::size_t i = 0; i < std::size(helps); ++i) {
+        printf("  %14s%s", long_opts[i].name, helps[i]);
+    }
+    std::exit(1);
+}
+
+#endif
+
+TEST_CASE("GNU long program options") {
+#if INFO_CLI_HAS_GETOPT_LONG
+    auto handle_args = [&](int argc, char** argv) {
+        std::vector<std::string_view> pos_args;
+
+        for (int opt, opt_idx = 0;;) {
+            if (opt = getopt_long(argc, argv, "-h", long_opts, &opt_idx);
+                opt == -1) {
+                break;
+            }
+
+            switch (opt) {
+            case 0:
+                if (strcmp(long_opts[opt_idx].name, "help") == 0) {
+                    help();
+                }
+#    include "data/@BENCHMARK_NUMBER@.gnu.check.txt"
+                if (strcmp(long_opts[opt_idx].name, "option-9999") == 0) {
+                    b<0> = std::stoi(optarg);
+                    break;
+                }
+                break;
+
+            case 1:
+                pos_args.emplace_back(argv[opt_idx]);
+                break;
+
+            case 'h':
+                help();
+
+            default:
+                break;
+            }
+        }
+
+        return pos_args;
+    };
+#endif
+
+    SECTION("Boost.ProgramOptions") {
+        po::options_description desc("opts");
+        desc.add_options()("help", "print help")
+#include "data/@BENCHMARK_NUMBER@.boost.txt"
+               ("option-9999", po::value<int>(&b<1>), "more help -- 9999");
+
+        int argc = Options<1>.size();
+        char** argv = const_cast<char**>(Options<1>.data());
+
+        po::variables_map ret;
+        po::store(po::parse_command_line(argc, argv, desc), ret);
+        CHECK(ret["option-9999"].as<int>() == 5);
+    }
+
+    SECTION("cxxopts") {
+        cxo::Options opts("opts");
+        opts.add_options()("h,help", "print help")
+#include "data/@BENCHMARK_NUMBER@.cxxopts.txt"
+               ("option-9999", "some help -- 9999", cxo::value<int>(b<2>));
+
+        int argc = Options<2>.size();
+        auto argv = ARGV_CXXOPTS_CAST(Options<2>.data());
+        (void) opts.parse(argc, argv);
+        CHECK(b<2> == 5);
+    }
+
+    SECTION("InfoCLI") {
+        ic::cli_parser cli{
+#include "data/@BENCHMARK_NUMBER@.info.txt"
+               "option-9999"_opt >= "more help -- 9999" >>= b<3>};
+        int argc = Options<3>.size();
+        char** argv = const_cast<char**>(Options<3>.data());
+
+        auto ret = cli(argc, argv);
+
+        CHECK(ret.size() == 1);
+        CHECK(ret.front() == "a.out");
+        CHECK(b<3> == 5);
+    }
+
+#if INFO_CLI_HAS_GETOPT_LONG
+    SECTION("getopt_long") {
+        int argc = Options<0>.size();
+        char** argv = const_cast<char**>(Options<1>.data());
+
+        (void) handle_args(argc, argv);
+
+        CHECK(b<0> == 5);
+    }
+#endif
+
+    SECTION("Benchmarks") {
+        BENCHMARK("Boost.ProgramOptions") {
+            po::options_description desc("opts");
+            desc.add_options()("help", "print help")
+#include "data/@BENCHMARK_NUMBER@.boost.txt"
+                   ("option-9999", po::value<int>(&b<1>), "more help -- 9999");
+
+            int argc = Options<1>.size();
+            char** argv = const_cast<char**>(Options<1>.data());
+
+            po::variables_map ret;
+            po::store(po::parse_command_line(argc, argv, desc), ret);
+            return ret;
+        };
+
+        BENCHMARK("cxxopts") {
+            cxo::Options opts("opts");
+            opts.add_options()("h,help", "print help")
+#include "data/@BENCHMARK_NUMBER@.cxxopts.txt"
+                   ("option-9999", "some help -- 9999", cxo::value<int>(b<2>));
+
+            int argc = Options<2>.size();
+            auto argv = ARGV_CXXOPTS_CAST(Options<2>.data());
+
+            return opts.parse(argc, argv);
+        };
+
+        BENCHMARK("InfoCLI") {
+            ic::cli_parser cli{
+#include "data/@BENCHMARK_NUMBER@.info.txt"
+                   "option-9999"_opt >= "more help -- 9999" >>= b<3>};
+            int argc = Options<3>.size();
+            char** argv = const_cast<char**>(Options<3>.data());
+
+            return cli(argc, argv);
+        };
+
+#if INFO_CLI_HAS_GETOPT_LONG
+        BENCHMARK("getopt_long") {
+            int argc = Options<0>.size();
+            char** argv = const_cast<char**>(Options<1>.data());
+
+            return handle_args(argc, argv);
+        };
+#endif
+    }
+}
