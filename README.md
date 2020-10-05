@@ -41,7 +41,7 @@ The actual compiler parts are omitted, of course.
 #include <iostream>
 
 // info::cli
-#include <info/cli.hpp>
+#include <info/cli.hxx>
 using namespace info::cli::udl;
 
 // project
