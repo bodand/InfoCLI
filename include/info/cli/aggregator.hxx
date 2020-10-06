@@ -39,7 +39,7 @@
 #include <vector>
 
 #include <info/cli/macros.hxx>
-#include <info/cli/repeat.hxx>
+#include <info/cli/extra/repeat.hxx>
 
 namespace info::_cli {
     template<class T>
@@ -52,11 +52,23 @@ namespace info::_cli {
         using type = T;
 
         template<class U>
-        auto
-        operator()(cli::repeat<T>& rep, U&& elem) const {
-            static_assert(std::is_assignable_v<T, decltype(std::forward<U>(elem))>,
+        auto /* !! CAUTION !! \
+               this function contrary to all other aggregator_<T> types does NOT
+               take T, but U where T is cli::repeat<U>. This is because
+               we somehow need to change passed (to cli_parser) rvalue reference
+               to repeat<U>&& to the within contained lvalue reference to U& */
+        operator()(T& rep, U&& elem) const {
+            static_assert(std::is_assignable_v<T&, decltype(std::forward<U>(elem))>,
                           "Value of aggregating type is not constructable with given type");
-            rep.value = std::forward<U>(elem);
+            if constexpr (std::is_integral_v<T>) {
+                rep += std::forward<U>(elem);
+            } else {
+                if constexpr (auto agg = aggregator_<T>{}) {
+                    agg(rep, std::forward<U>(elem));
+                } else {
+                    rep = std::forward<U>(elem);
+                }
+            }
         }
     };
 
@@ -125,8 +137,8 @@ namespace info::_cli {
         }
     };
 
-    template<class T> INFO_CLI_LOCAL
-    constexpr static auto aggregator = aggregator_<T>{};
+    template<class T>
+    INFO_CLI_LOCAL constexpr static auto aggregator = aggregator_<T>{};
 
     template<class T>
     using aggregator_type = typename aggregator_<T>::type;

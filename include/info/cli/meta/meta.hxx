@@ -40,6 +40,7 @@
 
 #include <info/cli/aggregator.hxx>
 #include <info/cli/macros.hxx>
+#include <info/cli/types/type_modifier.hxx>
 
 namespace info::cli::meta {
     template<class... Args>
@@ -51,7 +52,8 @@ namespace info::cli::meta {
     struct head_;
 
     template<template<class...> class L,
-             class T, class... Args>
+             class T,
+             class... Args>
     struct head_<L<T, Args...>> {
         using type = T;
     };
@@ -70,4 +72,32 @@ namespace info::cli::meta {
 
     template<class T>
     using aggregating_type = typename is_aggregating_<T>::type;
+
+    // expected_type -----------------------------------------------------------
+    template<class T>
+    struct INFO_CLI_LOCAL expected_type_ {
+        using type = aggregating_type<T>;
+    };
+
+    template<class T>
+    struct INFO_CLI_LOCAL expected_type_<cli::repeat<T>> {
+        using type = cli::repeat<T>;
+    };
+
+    template<class T>
+    using expected_type = typename expected_type_<T>::type;
+
+    // referenced_type -----------------------------------------------------------
+    template<class T>
+    struct INFO_CLI_LOCAL referenced_type_ {
+        using type = std::add_lvalue_reference_t<T>;
+    };
+
+    template<class T>
+    struct INFO_CLI_LOCAL referenced_type_<cli::repeat<T>> {
+        using type = std::add_lvalue_reference_t<T>;
+    };
+
+    template<class T>
+    using referenced_type = typename referenced_type_<T>::type;
 }

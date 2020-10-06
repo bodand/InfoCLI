@@ -16,6 +16,7 @@
 #include <info/cli/aggregator.hxx>
 #include <info/cli/meta/dissector.hxx>
 #include <info/cli/types/type_data.hxx>
+#include <info/cli/types/type_modifier.hxx>
 #include <info/cli/types/type_parser.hxx>
 
 namespace info::_cli {
@@ -66,31 +67,53 @@ namespace info::_cli {
                  >::type* = nullptr
         >// clang-format on
         cli::option
-        operator>>=(T& ref) {// Reference to variable
-            using typ = aggregator_type<T>;
-            return {help, [&ref](std::string_view str, const char*& last) {
-                        auto val = cli::type_parser<typ>{}(str, last);
+        operator>>=(T&& ref) {// Reference to variable
+            // The type without reference stuffs
+            using DecayedType = std::decay_t<T>;
+            // The type to which we have a reference to; usually DecayedType, but
+            // modifiers may change it to something else
+            // eg. DecayedType = repeat<T> => ReferencedType = T
+            using ReferencedType = cli::meta::referenced_type<DecayedType>;
+            // The type that's to be used for the type_data. In most cases
+            // it is ParsedType, except for modifiers where it is DecayedType,
+            // because type_data tracks changes with modifiers, so it needs to
+            // know about them
+            using ExpectedType = cli::meta::expected_type<DecayedType>;
+            // The type to parse from a string. This changes for stdlib containers
+            // and modifiers for example, otherwise is just DecayedType
+            using ParsedType = aggregator_type<DecayedType>;
+
+            auto& rf = [&ref]() -> ReferencedType& {
+                if constexpr (cli::type_modifier<T>) {
+                    return ref;
+                } else {
+                    return ref.value;
+                }
+            }();
+
+            return {help, [&rf](std::string_view str, const char*& last) {
+                        auto val = cli::type_parser<ParsedType>{}(str, last);
                         if (!val) {
                             return val.error() == cli::parser_opcode::ignore;
                         }
 
-                        if constexpr (auto agg = _cli::aggregator<T>) {
-                            if constexpr (std::is_move_constructible_v<typ>) {
-                                agg(ref, std::move(*val));
+                        if constexpr (auto agg = _cli::aggregator<DecayedType>) {
+                            if constexpr (std::is_move_constructible_v<ReferencedType>) {
+                                agg(rf, std::move(*val));
                             } else {
-                                agg(ref, *val);
+                                agg(rf, *val);
                             }
                         } else {
-                            if constexpr (std::is_move_assignable_v<T>) {
-                                ref = std::move(*val);
+                            if constexpr (std::is_move_assignable_v<ReferencedType>) {
+                                rf = std::move(*val);
                             } else {
-                                ref = *val;
+                                rf = *val;
                             }
                         }
                         return true;
                     },
                     std::move(names),
-                    cli::rt_type_data(cli::type_data<typ>{})};
+                    cli::rt_type_data(cli::type_data<ExpectedType>{})};
         }
 
         template<class Fn,// clang-format off

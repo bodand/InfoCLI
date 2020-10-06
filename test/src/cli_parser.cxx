@@ -107,3 +107,16 @@ TEST_CASE("functor callbacks work with string types",
     CHECK_THAT(rem, Catch::Equals(std::vector{"text"sv, "asd"sv}));
     CHECK(str == "afety");
 }
+
+TEST_CASE("repeat callback values allow incrementing valueless options",
+          "[cli_parser][value_callback][repeat]") {
+    int i = 0;
+    info::cli::cli_parser cli{
+           'v'_opt >>= info::cli::repeat{i}};
+    auto args = std::array{"-v",
+                           "-vvv"};
+
+    auto rem = cli(args.size(), const_cast<char**>(args.data()));
+
+    CHECK(i == 4);
+}

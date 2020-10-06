@@ -18,15 +18,6 @@ that may cross DLL boundaries.
 Constructing static libraries (`cli.lib`) is completely fine, and *is* actively 
 tested.
 
-### MingGW-W64 GCC
-
-MinGW-W64 GCC works well, and building DLLs is completely fine, the not here
-is that using by self-built LLVM LLD (from trunk) 12.0.0 causes linking errors
-during the creation of the DLL. The easiest workaround is to use the MinGW-W64 
-ld that comes with GCC.
-I do not know if this problem is present when using GCC on an actual unix-like
-system with lld.
-
 ## Usage
 
 The most basic example is as follows, where a basic compiler is modelled.
@@ -48,34 +39,32 @@ using namespace info::cli::udl;
 #include <compiler/compiler.hpp>
 
 int main(int argc, char** argv) {
-    std::string exec_name;
-    int optlvl;    
+    std::string exec_name = "a.out";
+    int optlvl = 0;
 
     info::cli::cli_parser cli{
         'o' / "output"_opt >= "The output executable's name" >>= exec_name,
-        'O'_opt >= "The optimization's level" >>= optlvl      
+        'O'_opt            >= "The optimization level"       >>= optlvl
     };
     
     std::vector<std::string_view> args;
     try {
         args = cli(argc, argv);
     } catch(const std::exception& ex) {
-        std::cout << "encountered error while parsing input arguments: " << ex.what() << std::endl;
+        std::cerr << "encountered error while parsing input arguments: " << ex.what() << std::endl;
         return -1;
     }
     
     compiler comp{args};
     comp.compile(exec_name, optlvl);
-    
-    return 0;
 }
 ```
 
 For the complete documentation and user guide the `docs/` directory contains
 multiple examples and a using `INFO_CLI_BUILD_DOCS` creates a complete doxygen
-documentation for the project.
+documentation for the project... After it is done, of course.
 
-## Benchmarks 
+## Benchmarks
 
 When configured with `INFO_CLI_BUILD_BENCHMARKS` the library builds the `benchmark/`
 directory/subproject, however it requires additional dependencies: 

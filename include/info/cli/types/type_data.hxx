@@ -110,7 +110,7 @@ namespace info::cli {
         any,         ///< Accepts all characters without any validation
     };
 
-    INFO_CLI_API
+    INFO_CLI_API INFO_CLI_CONST
     std::function<bool(char)> parse_type_accepts(parse_type type);
 
     template<class T>
@@ -121,6 +121,19 @@ namespace info::cli {
         constexpr const static parse_type expected_type =
                impl::is_non_char_arithmetic<T>::value ? parse_type::numeric
                                                       : parse_type::printable;
+    };
+
+    template<class T>
+    class INFO_CLI_LOCAL type_data<cli::repeat<T>> {
+        constexpr const static auto nonchar_arithmetic = impl::is_non_char_arithmetic<T>::value;
+
+    public:
+        constexpr const static bool allow_nothing = nonchar_arithmetic
+                                                    || type_data<T>::allow_nothing;
+        constexpr const static std::string_view default_value = nonchar_arithmetic ? "1"
+                                                                                   : type_data<T>::default_value;
+        constexpr const static int length = type_data<T>::length;
+        constexpr const static parse_type expected_type = type_data<T>::expected_type;
     };
 
     template<>
@@ -153,7 +166,8 @@ namespace info::cli {
         int length;
         parse_type expected_type;
 
-        [[nodiscard]] bool finite() const noexcept;
+        [[nodiscard]] INFO_CLI_PURE
+        bool finite() const noexcept;
 
         template<class T>
         explicit rt_type_data(type_data<T> td)

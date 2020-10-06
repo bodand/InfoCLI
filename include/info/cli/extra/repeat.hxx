@@ -9,6 +9,9 @@
 namespace info::cli {
     template<class T>
     struct repeat {
-        T value;
+        T& value;
     };
+
+    template<class T>
+    repeat(T&) -> repeat<T>;
 }

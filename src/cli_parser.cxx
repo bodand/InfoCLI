@@ -2,7 +2,8 @@
  * Copyright (c) 2020 bodand
  * Licensed under the BSD 3-Clause license
  *
- *
+ * Implements the cli_parser class's member functions
+ *  => contains all the parsing logic
  */
 
 #include <cassert>

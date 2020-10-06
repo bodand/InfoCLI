@@ -43,6 +43,7 @@
 
 #include <info/expected.hpp>
 
+#include <info/cli/extra/repeat.hxx>
 #include <info/cli/macros.hxx>
 #include <info/cli/meta/meta.hxx>
 
@@ -76,6 +77,9 @@ namespace info::cli {
             return INFO_UNEXPECTED{parser_opcode::terminate};
         }
     };
+
+    template<class T>
+    struct INFO_CLI_API type_parser<cli::repeat<T>> : type_parser<T> { };
 
 #define PARSER_DECL(T)                                                      \
     template<>                                                              \
