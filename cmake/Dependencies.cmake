@@ -51,6 +51,7 @@ message(CHECK_START "[${PROJECT_NAME}] '{fmt}' (1/${_DEP_COUNT})")
 GetDependency(fmt
               REPOSITORY_URL https://github.com/fmtlib/fmt.git
               VERSION 7.0.3
+              REMOTE_ONLY
               )
 message(CHECK_PASS "found")
 
@@ -94,7 +95,6 @@ if (INFO_CLI_BUILD_BENCHMARKS)
     #  - much lighter-weight
     #  - according to my previous benchmarks; way faster than Boost.ProgramOptions
     message(CHECK_START "[${PROJECT_NAME}] 'cxxopts' (5/${_DEP_COUNT})")
-#    find_package(cxxopts REQUIRED)
     GetDependency(cxxopts
                   REPOSITORY_URL https://github.com/jarro2783/cxxopts.git
                   VERSION v2.2.1
