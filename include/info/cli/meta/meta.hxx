@@ -59,12 +59,6 @@ namespace info::cli::meta {
     template<class L>
     using head = typename head_<L>::type;
 
-    // rt_type -----------------------------------------------------------------
-    template<class T>
-    struct INFO_CLI_LOCAL rt_type {
-        using type = T;
-    };
-
     // is_aggregating ----------------------------------------------------------
     template<class T>
     struct INFO_CLI_LOCAL is_aggregating_ : std::bool_constant<_cli::aggregator_<T>::value> {

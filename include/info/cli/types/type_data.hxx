@@ -156,16 +156,6 @@ namespace info::cli {
         [[nodiscard]] bool finite() const noexcept;
 
         template<class T>
-        rt_type_data()
-             : rt_type_data(type_data<T>{}) {
-        }
-
-        template<class T>
-        explicit rt_type_data(cli::meta::rt_type<T>)
-             : rt_type_data(type_data<T>{}) {
-        }
-
-        template<class T>
         explicit rt_type_data(type_data<T> td)
              : allow_nothing{td.allow_nothing},
                default_val{td.default_value},
