@@ -91,7 +91,7 @@ add_library(cli "${INFO_CLI_BUILD_TYPE}"
             src/types/type_parser.cxx
             src/exc/no_such_option.cxx
             src/exc/callback_error.cxx
-            )
+            src/exc/bad_option_value.cxx)
 add_library(info::cli ALIAS cli)
 
 target_link_libraries(cli PUBLIC

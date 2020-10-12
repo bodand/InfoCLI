@@ -40,6 +40,7 @@
 
 #include <info/cli/macros.hxx>
 #include <info/cli/meta/meta.hxx>
+#include <info/cli/meta/type_name.hxx>
 
 namespace info::cli {
     namespace impl {
@@ -111,7 +112,8 @@ namespace info::cli {
     };
 
     INFO_CLI_API INFO_CLI_CONST
-    std::function<bool(char)> parse_type_accepts(parse_type type);
+           std::function<bool(char)>
+           parse_type_accepts(parse_type type);
 
     template<class T>
     struct INFO_CLI_LOCAL type_data {
@@ -121,6 +123,7 @@ namespace info::cli {
         constexpr const static parse_type expected_type =
                impl::is_non_char_arithmetic<T>::value ? parse_type::numeric
                                                       : parse_type::printable;
+        constexpr const static std::string_view type_name = meta::type_name<T>();
     };
 
     template<class T>
@@ -134,6 +137,7 @@ namespace info::cli {
                                                                                    : type_data<T>::default_value;
         constexpr const static int length = type_data<T>::length;
         constexpr const static parse_type expected_type = type_data<T>::expected_type;
+        constexpr const static std::string_view type_name = type_data<T>::type_name;
     };
 
     template<>
@@ -142,6 +146,7 @@ namespace info::cli {
         constexpr const static std::string_view default_value = "1";
         constexpr const static int length = -1;
         constexpr const static parse_type expected_type = parse_type::alphanumeric;
+        constexpr const static std::string_view type_name = "bool";
     };
 
     template<>
@@ -150,6 +155,7 @@ namespace info::cli {
         constexpr const static std::string_view default_value = "";
         constexpr const static int length = 1;
         constexpr const static parse_type expected_type = parse_type::alphanumeric;
+        constexpr const static std::string_view type_name = "char";
     };
 
     template<>
@@ -158,6 +164,7 @@ namespace info::cli {
         constexpr const static std::string_view default_value = "";
         constexpr const static int length = 1;
         constexpr const static parse_type expected_type = parse_type::alphanumeric;
+        constexpr const static std::string_view type_name = "unsigned char";
     };
 
     struct INFO_CLI_API rt_type_data {
@@ -165,16 +172,17 @@ namespace info::cli {
         std::string_view default_val;
         int length;
         parse_type expected_type;
+        std::string_view type_name;
 
-        [[nodiscard]] INFO_CLI_PURE
-        bool finite() const noexcept;
+        [[nodiscard]] INFO_CLI_PURE bool finite() const noexcept;
 
         template<class T>
         explicit rt_type_data(type_data<T> td)
              : allow_nothing{td.allow_nothing},
                default_val{td.default_value},
                length{td.length},
-               expected_type{td.expected_type} { }
+               expected_type{td.expected_type},
+               type_name(td.type_name) { }
     };
 
 }

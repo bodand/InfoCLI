@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include <info/cli/cli_parser.hxx>
+#include <info/cli/exc/bad_option_value.hxx>
 #include <info/cli/exc/callback_error.hxx>
 #include <info/cli/exc/no_such_option.hxx>
 #include <info/lambda.hpp>
@@ -109,8 +110,7 @@ info::cli::cli_parser::unpacked_shorts(char* arg, char** argv, int& i) {
 
     if (!data.allow_nothing) {
         if (argv[++i] == nullptr) {
-            assert(false && "unimplemented");
-            // todo: thrown bad_option_arguments(argv[i], type_data.type_name or smth)
+            throw bad_option_value(argv[i], data.type_name, "<none given>");
         }
 
         auto str = data.length != -1 ? std::string_view(argv[i], static_cast<std::size_t>(data.length))
@@ -163,8 +163,7 @@ info::cli::cli_parser::packed_shorts(char* arg, char** argv, int& i) {
             throw callback_error(argv[i], data.default_val.data());
         }
     } else {
-        assert(false && "unimplemented");
-        // todo: thrown bad_option_arguments(argv[i], type_data.type_name or smth)
+        throw bad_option_value(argv[i], data.type_name, "<none given>");
     }
 }
 
@@ -205,8 +204,7 @@ info::cli::cli_parser::long_option(char** argv, int& i) {
 
     if (!data.allow_nothing) {
         if (argv[++i] == nullptr) {
-            assert(false && "unimplemented");
-            // todo: thrown bad_option_arguments(argv[i], type_data.type_name or smth)
+            throw bad_option_value(argv[i], data.type_name, "<none given>");
         }
 
         auto str = data.length != -1 ? std::string_view(argv[i], static_cast<std::size_t>(data.length))

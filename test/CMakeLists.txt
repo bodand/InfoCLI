@@ -40,7 +40,6 @@ add_executable(cli_test
                src/dissector.cxx
                src/main.cxx
                src/option_builder.cxx
-               src/option.cxx
                src/type_parser.cxx
                src/cli_parser.cxx
                src/cli_parser.long.cxx

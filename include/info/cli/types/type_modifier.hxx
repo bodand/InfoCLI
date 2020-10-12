@@ -17,11 +17,24 @@
 #include <info/cli/macros.hxx>
 
 namespace info::cli {
-    template<class>
-    struct INFO_CLI_API type_modifier_ : std::false_type { };
+    template<class T>
+    struct INFO_CLI_API type_modifier_ : std::false_type {
+        auto&
+        operator()(T& x) const noexcept {
+            return x;
+        }
+    };
 
     template<class T>
-    struct INFO_CLI_API type_modifier_<repeat<T>> : std::true_type { };
+    struct INFO_CLI_API type_modifier_<repeat<T>> : std::true_type {
+        template<class Ft>
+        auto&
+        operator()(Ft&& x) const noexcept {
+            static_assert(std::is_same_v<std::decay_t<Ft>, std::decay_t<repeat<T>>>,
+                          "Quote the LaTeX badness 1000. Don't try to be sneaky.");
+            return x.value;
+        }
+    };
 
     template<class T>
     constexpr const static auto type_modifier = type_modifier_<T>::value;
