@@ -159,7 +159,7 @@ info::cli::cli_parser::packed_shorts(char* arg, char** argv, int& i) {
 
         short_option(const_cast<char*>(last), argv, i);
     } else if (data.allow_nothing) {
-        if (!fn(data.default_val, last)) {// last ignored
+        if (INFO_CLI_UNLIKELY(!fn(data.default_val, last))) {// last ignored
             throw callback_error(argv[i], data.default_val.data());
         }
     } else {
