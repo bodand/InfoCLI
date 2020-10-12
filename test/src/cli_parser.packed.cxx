@@ -51,3 +51,22 @@ TEST_CASE("cli_parser parses packed options with values correctly",
     CHECK(i == 42);
     CHECK(c == 'i');
 }
+
+TEST_CASE("cli_parser parses packed options where the pack's element allows nothing",
+          "[cli_parser][short_options][packed]") {
+    bool b = true;
+    int i = 0;
+    char c = '\0';
+    info::cli::cli_parser cli{
+           'b'_opt >>= b,
+           '.'_opt >>= i, // this is a heinous idea -.2
+           'c'_opt >>= c};
+    auto args = std::array{"text", "-cib.42", "asd"};
+
+    auto rem = cli(args.size(), const_cast<char**>(args.data()));
+
+    CHECK_THAT(rem, Catch::Equals(std::vector{"text"sv, "asd"sv}));
+    CHECK(b);
+    CHECK(i == 42);
+    CHECK(c == 'i');
+}

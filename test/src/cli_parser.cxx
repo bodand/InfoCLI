@@ -58,8 +58,7 @@ TEST_CASE("aggregating types work properly",
     std::vector<std::string> agg;
 
     info::cli::cli_parser cli{
-           'o'_opt >>= agg
-    };
+           'o'_opt >>= agg};
     auto args = std::array{"text",
                            "-othis",
                            "-ois",
@@ -78,8 +77,7 @@ TEST_CASE("functor callbacks work with non-string types",
     info::cli::cli_parser cli{
            'o'_opt >>= [&i](int x) {
                i = x;
-           }
-    };
+           }};
     auto args = std::array{"text",
                            "-o3",
                            "asd"};
@@ -96,8 +94,7 @@ TEST_CASE("functor callbacks work with string types",
     info::cli::cli_parser cli{
            's'_opt >>= [&str](std::string_view x) {
                str = x;
-           }
-    };
+           }};
     auto args = std::array{"text",
                            "-safety",
                            "asd"};
@@ -119,4 +116,42 @@ TEST_CASE("repeat callback values allow incrementing valueless options",
     auto rem = cli(args.size(), const_cast<char**>(args.data()));
 
     CHECK(i == 4);
+}
+
+TEST_CASE("cli_parser handles - correctly",
+          "[cli_parser][meta_options]") {
+    int i = 0;
+    info::cli::cli_parser cli{
+           'i'_opt >>= i};
+    auto args = std::array{"text",
+                           "-i3",
+                           "asd",
+                           "-",
+                           "-i2",
+                           "asd"};
+
+
+    auto rem = cli(args.size(), const_cast<char**>(args.data()));
+
+    CHECK_THAT(rem, Catch::Equals(std::vector{"text"sv, "asd"sv, "-"sv, "asd"sv}));
+    CHECK(i == 2);
+}
+
+TEST_CASE("cli_parser handles -- correctly",
+          "[cli_parser][meta_options]") {
+    int i = 0;
+    info::cli::cli_parser cli{
+           'i'_opt >>= i};
+    auto args = std::array{"text",
+                           "-i3",
+                           "asd",
+                           "--",
+                           "-i2",
+                           "asd"};
+
+
+    auto rem = cli(args.size(), const_cast<char**>(args.data()));
+
+    CHECK_THAT(rem, Catch::Equals(std::vector{"text"sv, "asd"sv, "-i2"sv, "asd"sv}));
+    CHECK(i == 3);
 }
