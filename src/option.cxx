@@ -25,10 +25,10 @@ info::cli::option::option(std::string help,
        help(std::move(help)),
        callback(std::move(callback)) { }
 
-info::cli::option::option(std::function<bool(std::string_view, const char*&)> callback,
-                          std::vector<std::string>&& names,
-                          rt_type_data type)
-     : names(std::move(names)),
-       type(type),
-       help(),
-       callback(std::move(callback)) { }
+//info::cli::option::option(std::function<bool(std::string_view, const char*&)> callback,
+//                          std::vector<std::string>&& names,
+//                          rt_type_data type)
+//     : names(std::move(names)),
+//       type(type),
+//       help(),
+//       callback(std::move(callback)) { }

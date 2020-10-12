@@ -30,9 +30,9 @@ namespace info::cli {
                std::function<bool(std::string_view, const char*&)> callback,
                std::vector<std::string>&& names,
                rt_type_data type);
-        option(std::function<bool(std::string_view, const char*&)> callback,
-               std::vector<std::string>&& names,
-               rt_type_data type);
+//        option(std::function<bool(std::string_view, const char*&)> callback,
+//               std::vector<std::string>&& names,
+//               rt_type_data type);
 
         std::vector<std::string> names;
         rt_type_data type;
@@ -83,13 +83,7 @@ namespace info::_cli {
             // and modifiers for example, otherwise is just DecayedType
             using ParsedType = aggregator_type<DecayedType>;
 
-            auto& rf = [&ref]() -> ReferencedType& {
-                if constexpr (cli::type_modifier<T>) {
-                    return ref;
-                } else {
-                    return ref.value;
-                }
-            }();
+            auto& rf = cli::type_modifier_<T>{}(ref);
 
             return {help, [&rf](std::string_view str, const char*& last) {
                         auto val = cli::type_parser<ParsedType>{}(str, last);
