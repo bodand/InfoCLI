@@ -154,7 +154,7 @@ namespace info::cli {
         constexpr const static bool allow_nothing = false;
         constexpr const static std::string_view default_value = "";
         constexpr const static int length = 1;
-        constexpr const static parse_type expected_type = parse_type::alphanumeric;
+        constexpr const static parse_type expected_type = parse_type::printable;
         constexpr const static std::string_view type_name = "char";
     };
 
@@ -163,7 +163,7 @@ namespace info::cli {
         constexpr const static bool allow_nothing = false;
         constexpr const static std::string_view default_value = "";
         constexpr const static int length = 1;
-        constexpr const static parse_type expected_type = parse_type::alphanumeric;
+        constexpr const static parse_type expected_type = parse_type::any;
         constexpr const static std::string_view type_name = "unsigned char";
     };
 
@@ -177,12 +177,12 @@ namespace info::cli {
         [[nodiscard]] INFO_CLI_PURE bool finite() const noexcept;
 
         template<class T>
-        explicit rt_type_data(type_data<T> td)
-             : allow_nothing{td.allow_nothing},
-               default_val{td.default_value},
-               length{td.length},
-               expected_type{td.expected_type},
-               type_name(td.type_name) { }
+        explicit rt_type_data(type_data<T>)
+             : allow_nothing{type_data<T>::allow_nothing},
+               default_val{type_data<T>::default_value},
+               length{type_data<T>::length},
+               expected_type{type_data<T>::expected_type},
+               type_name{type_data<T>::type_name} { }
     };
 
 }
