@@ -30,9 +30,6 @@ namespace info::cli {
                std::function<bool(std::string_view, const char*&)> callback,
                std::vector<std::string>&& names,
                rt_type_data type);
-//        option(std::function<bool(std::string_view, const char*&)> callback,
-//               std::vector<std::string>&& names,
-//               rt_type_data type);
 
         std::vector<std::string> names;
         rt_type_data type;

@@ -7,13 +7,11 @@
 
 #include <array>
 #include <string_view>
-#include <vector>
 using namespace std::literals;
 
 #include <catch2/catch.hpp>
 
 #include <info/cli/cli_parser.hxx>
-#include <info/cli/option.hxx>
 using namespace info::cli::udl;
 
 TEST_CASE("cli_parser parses packed valueless boolean flags correctly",
@@ -54,7 +52,7 @@ TEST_CASE("cli_parser parses packed options with values correctly",
 
 TEST_CASE("cli_parser parses packed options where the pack's element allows nothing",
           "[cli_parser][short_options][packed]") {
-    bool b = true;
+    bool b = false;
     int i = 0;
     char c = '\0';
     info::cli::cli_parser cli{

@@ -20,6 +20,24 @@ Format: *major*.*minor*.*patch*
  New *patch* updates are represented in the codename by concatenating the patch
  version + 1 to the end with a dash eg. 'Daedalus-2' for InfoUtils `v1.3.1`.
 
+## VERSION 2.0.1 - Helium-2
+
+### Added:
+ - First-class MSVC support
+ - Support for type modifiers like `cli::repeat<int>` for opts that can 
+   be called multiple times
+ 
+### Removed:
+ - Hideous compile times
+ 
+### Changed: 
+ - DSL syntax completely remade
+ - Whole internal architecture remaster
+
+## VERSION 2.0.0 - Helium
+
+We don't talk about it.
+
 ## VERSION 1.0.0 - Hydrogen
 
 ### Added:

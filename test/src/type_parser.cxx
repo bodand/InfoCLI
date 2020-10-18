@@ -72,9 +72,11 @@ TEMPLATE_TEST_CASE("type_parser test cases for built-in specialized types - inte
                    short,
                    int,
                    long,
+                   long long,
                    unsigned short,
                    unsigned,
-                   unsigned long) {
+                   unsigned long,
+                   unsigned long long) {
     type_parser<TestType> parser;
     const char* last = nullptr;
 

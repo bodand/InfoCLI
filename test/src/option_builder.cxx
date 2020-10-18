@@ -9,6 +9,7 @@
 
 #include <info/cli/option.hxx>
 using namespace info::cli::udl;
+using namespace std::literals;
 
 TEST_CASE("_opt creates an object that contains the name given to it",
           "[dsl][option]") {
@@ -28,7 +29,7 @@ TEST_CASE("_opt creates an object that contains the name given to it with chars"
     CHECK(std::equal(opt.names.begin(), opt.names.end(), exp.begin()));
 }
 
-TEST_CASE("step 0 builder can be prepended with pipes",
+TEST_CASE("step 0 builder can be prepended with slashes",
           "[dsl][option]") {
     std::vector<std::string> exp{"f", "fancy-option"};
 
@@ -37,13 +38,12 @@ TEST_CASE("step 0 builder can be prepended with pipes",
     CHECK(std::equal(opt.names.begin(), opt.names.end(), exp.begin()));
 }
 
-TEST_CASE("step 0 builder can be appended with pipes",
+TEST_CASE("step 0 builder can be appended with slashes",
           "[dsl][option]") {
-    std::vector<std::string> exp{"f", "fancy-option"};
+    auto opt = 'f'_opt / "fancy-option" / 'F';
 
-    auto opt = 'f'_opt / "fancy-option";
-
-    CHECK(std::equal(opt.names.begin(), opt.names.end(), exp.begin()));
+    CHECK_THAT(std::vector(opt.names.begin(), opt.names.end()),
+               Catch::Equals(std::vector{"f"s, "fancy-option"s, "F"s}));
 }
 
 TEST_CASE("step 0 builders can be joined",

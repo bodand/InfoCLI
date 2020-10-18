@@ -36,10 +36,10 @@ namespace info::cli {
         std::unordered_set<std::string> _helps;
         std::unordered_map<std::string, option_info> _options;
 
-        void short_option(char* arg, char** argv, int& i);
-        void unpacked_shorts(char* arg, char** argv, int& i);
-        void packed_shorts(char* arg, char** argv, int& i);
-        void long_option(char** argv, int& i);
+        void short_option(char* arg, int argc, char** argv, int& i);
+        void unpacked_shorts(char* arg, int argc, char** argv, int& i);
+        void packed_shorts(char* arg, int argc, char** argv, int& i);
+        void long_option(int argc, char** argv, int& i);
 
         INFO_CLI_PURE [[nodiscard]] static char* strip_option(char* opt, bool lng = false);
     };

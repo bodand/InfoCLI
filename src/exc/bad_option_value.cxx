@@ -11,7 +11,7 @@
 const char*
 info::cli::bad_option_value::what() const noexcept {
     static std::string str;
-    str = fmt::format("error: unintelligible value provided for option {} (expecting type {}): {}",
+    str = fmt::format("error: unintelligible value provided for option '{}' (expecting type {}): {}",
                       opt_name,
                       type,
                       args);
