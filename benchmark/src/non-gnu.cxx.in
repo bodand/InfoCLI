@@ -1,0 +1,78 @@
+/** InfoCLI project
+ * Copyright (c) 2020 bodand
+ * Licensed under the BSD 3-Clause license
+ *
+ * Benchmark for cli parsing non-gnu long options
+ */
+
+// SHARED STUFF
+#include <array>
+template<int>
+constexpr static auto Options = std::array{
+       "a.out",
+#include "data/@BENCHMARK_NUMBER@.input.non-gnu.txt"
+       "--option-9999",
+       "5"};
+template<int>
+static int a{};
+template<int>
+static int b{};
+
+#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_ENABLE_BENCHMARKING
+#include <catch2/catch.hpp>
+
+#include <getopt-compat.hxx>
+
+#include <boost/program_options.hpp>
+#include <cxxopts.hpp>
+#include <info/cli.hxx>
+#if INFO_CLI_HAS_HEADER_GETOPT_H
+#    include <getopt.h>
+#endif
+
+namespace po = boost::program_options;
+namespace cxo = cxxopts;
+namespace ic = info::cli;
+using namespace info::cli::udl;
+
+
+TEST_CASE("Non-GNU long program options") {
+    BENCHMARK("Boost.ProgramOptions") {
+        po::options_description desc("opts");
+        desc.add_options()("help", "print help")
+#include "data/@BENCHMARK_NUMBER@.boost.txt"
+               ("option-9999", po::value<int>(&b<1>), "more help -- 9999");
+
+        int argc = Options<1>.size();
+        char** argv = const_cast<char**>(Options<1>.data());
+
+        return po::parse_command_line(argc, argv, desc);
+    };
+
+    BENCHMARK("cxxopts") {
+        cxo::Options opts("opts");
+        opts.add_options()("h,help", "print help")
+#include "data/@BENCHMARK_NUMBER@.cxxopts.txt"
+               ("option-9999", "some help -- 9999", cxo::value<int>(b<2>));
+
+        int argc = Options<2>.size();
+#ifdef _MSC_VER
+        char** argv = const_cast<char**>(Options<2>.data());
+#else
+        const char** argv = const_cast<const char**>(Options<2>.data());
+#endif
+        return opts.parse(argc, argv);
+    };
+
+    BENCHMARK("InfoCLI") {
+        ic::cli_parser cli{
+#include "data/@BENCHMARK_NUMBER@.info.txt"
+               "option-9999"_opt >= "more help -- 9999" >>= b<3>};
+
+        int argc = Options<3>.size();
+        char** argv = const_cast<char**>(Options<3>.data());
+
+        auto ret = cli(argc, argv);
+    };
+}

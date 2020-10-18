@@ -3,9 +3,8 @@
 
 ### Build dirs
 _build*/
-benchmark/data
-
-### Configured values
+GetDependency.cmake
+docs/html
 
 # Created by .ignore support plugin (hsz.mobi)
 ### C++ template
@@ -84,4 +83,3 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-

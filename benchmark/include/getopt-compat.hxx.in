@@ -1,0 +1,12 @@
+/** InfoCLI project
+ * Copyright (c) 2020 bodand
+ * Licensed under the BSD 3-Clause license
+ *
+ * A CMake configured header for getopt functionality because POSIX is not
+ * everywhere. Also I kind of want the GNU getopt_long extensions so...
+ */
+#pragma once
+
+#cmakedefine01 INFO_CLI_HAS_HEADER_GETOPT_H
+#cmakedefine01 INFO_CLI_HAS_GETOPT
+#cmakedefine01 INFO_CLI_HAS_GETOPT_LONG

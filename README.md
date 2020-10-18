@@ -1,46 +1,22 @@
-# InfoCLI
+# InfoCLI v2
 
-The new generation of the mess that was InfoParse. InfoCLI doesn't have completely
-random and useless capabilities, like deleting the pointer returned by the
-callback function, or rerunning the callback depending on its return value.
-Why did I even have those, I don't know.
+InfoCLI v2 is the rethought version of InfoCLI. It 
 
-Also, InfoCLI does everything it can during compile-time, expect, of course, the
-parsing.
+## Compatibility
 
-The API is different, as now we have different design goals, but the main design 
-decision is still the same: have it look like Perl's `Getopt::Long` as much as possible.  
+The code's only been tested on Windows at the moment, so it's advised to check
+on your OS by building and running the tests. If an error comes up, please throw
+me an issue, so I at least know there are problems and don't have to live blissfully
+ignorant of them.
 
-## DISCLAIMER
-If you have a lot of options to check, this library is not the best choice you can make.
-While I worked very hard to not make it so, the compile-times are horrendous.
-Up to 100 options is doable, as if you were compiling something using Boost.Spirit, 
-200 is risque, and more is only advised if you can make absolutely sure, 
-that one file that contains the cli_parser creation is only compiled *once*,
-and only in really rare cases. 
-Even then, use something else.
-With 500 options I have around 1 hour long compilations for 1 file. You can try it
-in the benchmarks if you don't believe me: pass `INFO_CLI_BUILD_BENCHMARKS` to cmake 
-then build the target `cli-bench-500`.
+### MSVC
 
-Also, note that the compilers **will** take up RAM. Clang seems to use more on my
-machine, but that may vary, as I'm running Windows & the MSYS2 MinGW install of both compilers.
-
-## MSVC
-
-MSVC does not support this GNU extension, nor anything equal:
-```c++
-template <class CharT, CharT...>
-struct option_str {};
-
-template <class CharT, CharT... cs>
-constexpr option_str<char, cs...> operator""_opt() {
-  return {};
-}
-
-"asd"_opt;
-```
-In turn, we respect its decision by not supporting MSVC.
+While in theory MSVC can fully build InfoCLI, building a DLL *is not* actively tested
+because I'm kind of lost on how the Microsoft ABI works, and how MSVC deals with 
+DLLs with those imports and exports, mostly because there are C++ stdlib components
+that may cross DLL boundaries.
+Constructing static libraries (`cli.lib`) is completely fine, and *is* actively 
+tested.
 
 ## Usage
 
@@ -48,6 +24,7 @@ The most basic example is as follows, where a basic compiler is modelled.
 It takes `-o` or `--output` to specify how to call the output, and `-O` to
 specify optimization level. 
 The actual compiler parts are omitted, of course.
+
 ```c++
 // stdlib
 #include <string>
@@ -55,34 +32,51 @@ The actual compiler parts are omitted, of course.
 #include <iostream>
 
 // info::cli
-#include <info/cli.hpp>
-using namespace info::cli::literals;
+#include <info/cli.hxx>
+using namespace info::cli::udl;
 
 // project
 #include <compiler/compiler.hpp>
 
 int main(int argc, char** argv) {
-    std::string exec_name;
-    int optlvl;    
+    std::string exec_name = "a.out";
+    int optlvl = 0;
 
-    auto cli = info::cli_parser::make(
-        "o|output"_opt["The output executable's name"_hlp]->*exec_name,
-        "O"_opt["The optimization's level"]->*optlvl      
-    )();
+    info::cli::cli_parser cli{
+        'o' / "output"_opt >= "The output executable's name" >>= exec_name,
+        'O'_opt            >= "The optimization level"       >>= optlvl
+    };
     
     std::vector<std::string_view> args;
     try {
         args = cli(argc, argv);
     } catch(const std::exception& ex) {
-        std::cout << "encountered error while parsing input arguments: " << ex.what() << std::endl;
+        std::cerr << "encountered error while parsing input arguments: " << ex.what() << std::endl;
         return -1;
     }
     
     compiler comp{args};
     comp.compile(exec_name, optlvl);
-    
-    return 0;
 }
 ```
 
-For more usage examples and tutorial see the examples/ subdirectory.
+For the complete documentation and user guide the `docs/` directory contains
+multiple examples and a using `INFO_CLI_BUILD_DOCS` creates a complete doxygen
+documentation for the project... After it is done, of course.
+
+## Benchmarks
+
+When configured with `INFO_CLI_BUILD_BENCHMARKS` the library builds the `benchmark/`
+directory/subproject, however it requires additional dependencies: 
+ - `Boost` for the `Boost.ProgramOptions` module, which cannot be installed stand-alone,
+   thus the whole charade is required. This requires the user to install it:
+   InfoCLI does not attempt to auto-install. 
+ - `cxxopts` the other commonly used CLI parsing library. This is header only,
+   and is CMake based, therefore, if not found, InfoCLI will install it locally
+   for the project.
+   
+Benchmarking is done with the Catch2 test library's benchmark capabilities, so
+no other libraries are required.
+
+After configuring the `cli-bench-${numer of options parsed}` targets can be used 
+to run the benchmarks. For the available targets, see the output of CMake.

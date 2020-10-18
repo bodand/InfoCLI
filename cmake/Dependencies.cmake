@@ -28,97 +28,84 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-include(Dependency)
-
-## List of normal dependencies
-
-# Metaprogramming library
-GetDependency(
-        Hana
-        REPOSITORY_URL https://github.com/ldionne/hana.git
-        VERSION v1.6.0
-        FALLBACK Boost
-)
-
-# Metaprogramming library on the type-level
-GetDependency(
-        boost_mp11
-        REPOSITORY_URL https://github.com/boostorg/mp11.git
-        VERSION boost-1.73.0
-        FALLBACK Boost
-)
-
-# {fmt}
-GetDependency(
-        fmt
-        REPOSITORY_URL https://github.com/fmtlib/fmt.git
-        VERSION 6.2.1
-)
-
-# DarkCity
-GetDependency(
-        DarkCity
-        REPOSITORY_URL https://github.com/isbodand/DarkCity.git
-        VERSION v1.0.1
-)
-
-# Info* project utilities
-set(INFO_UTILS_BUILD_TESTS Off CACHE BOOL "<option>" FORCE)
-# InfoUtils needs to disable tests when not main project
-GetDependency(
-        InfoUtils
-        REPOSITORY_URL https://github.com/isbodand/InfoUtils.git
-        VERSION v1.5.0
-)
-
-# Test dependencies
-if (INFO_CLI_BUILD_TESTS)
-    # Catch2 testing framework
-    GetDependency(
-            Catch2
-            REPOSITORY_URL https://github.com/catchorg/Catch2.git
-            VERSION v2.12.1
-    )
-    # this is most likely implementation detail, if it acts up yell at me
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CACHEFILE_DIR}/_deps/catch2-src/contrib")
+## Download GetDependency ##
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/GetDependency.cmake")
+    message("[${PROJECT_NAME}] Downloading GetDependency")
+    file(DOWNLOAD
+         "https://raw.githubusercontent.com/bodand/GetDependency/master/cmake/GetDependency.cmake"
+         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/GetDependency.cmake"
+         )
 endif ()
+include(GetDependency)
+
+message(CHECK_START "[${PROJECT_NAME}] Setting up dependencies")
+list(APPEND CMAKE_MESSAGE_INDENT "  ")
+if (INFO_CLI_BUILD_BENCHMARKS)
+    set(_DEP_COUNT 6)
+else ()
+    set(_DEP_COUNT 3)
+endif ()
+
+## {fmt} ##
+message(CHECK_START "[${PROJECT_NAME}] '{fmt}' (1/${_DEP_COUNT})")
+GetDependency(fmt
+              REPOSITORY_URL https://github.com/fmtlib/fmt.git
+              VERSION 7.0.3
+              REMOTE_ONLY
+              )
+message(CHECK_PASS "found")
+
+## InfoUtils ##
+message(CHECK_START "[${PROJECT_NAME}] 'InfoUtils' (2/${_DEP_COUNT})")
+GetDependency(InfoUtils
+              REPOSITORY_URL https://github.com/bodand/InfoUtils.git
+              VERSION v1.6.0
+              )
+message(CHECK_PASS "found")
+
+## Catch2 ##
+message(CHECK_START "[${PROJECT_NAME}] 'Catch2' (3/${_DEP_COUNT})")
+GetDependency(Catch2
+              REPOSITORY_URL https://github.com/catchorg/Catch2.git
+              VERSION v2.13.1
+              REMOTE_ONLY
+              )
+message(CHECK_PASS "found")
 
 # Benchmark dependencies
 if (INFO_CLI_BUILD_BENCHMARKS)
     ## Boost.ProgramOptions
-    # Boost's answer to CLI parsing. A Boost-style, heavyweight,
-    # can even cook your dinner if you need it library
+    # Boost's answer to CLI parsing. A Boost-style, heavyweight library
     # Either depends on other parts of Boost, or just doesn't provide
     # a CMake project as-is, so we need to pull in the whole thing
     # fun times
-    GetDependency(
-            Boost
-            COMPONENTS program_options
-            REPOSITORY_URL https://github.com/boostorg/boost.git
-            VERSION v1.73.0
-    )
+    message(CHECK_START "[${PROJECT_NAME}] 'Boost' (4/${_DEP_COUNT})")
+    find_package(Boost COMPONENTS program_options)
+    if (NOT Boost_FOUND)
+        list(APPEND INFO_CLI_MISSING_DEPS "Boost")
+        message(CHECK_FAIL "failed")
+    else ()
+        message(CHECK_PASS "found")
+    endif ()
 
     ## cxxopts
     # CLI parser with a similar interface to Boost.ProgramOptions, but is
     #  - header-only
     #  - not part of Boost
     #  - much lighter-weight
-    GetDependency(
-            cxxopts
-            REPOSITORY_URL https://github.com/jarro2783/cxxopts.git
-            VERSION v2.2.0
-    )
+    #  - according to my previous benchmarks; way faster than Boost.ProgramOptions
+    message(CHECK_START "[${PROJECT_NAME}] 'cxxopts' (5/${_DEP_COUNT})")
+    GetDependency(cxxopts
+                  REPOSITORY_URL https://github.com/jarro2783/cxxopts.git
+                  VERSION v2.2.1
+                  )
+    message(CHECK_PASS "found")
+endif ()
 
-    ## gbenchmark
-    # Benchmarking library
-    set(BENCHMARK_ENABLE_INSTALL Off CACHE BOOL "<option>" FORCE)
-    set(BENCHMARK_ENABLE_TESTING Off CACHE BOOL "<option>" FORCE)
-    set(BENCHMARK_ENABLE_GTEST_TESTS Off CACHE BOOL "<option>" FORCE)
-    GetDependency(
-            benchmark
-            REPOSITORY_URL https://github.com/google/benchmark.git
-            VERSION v1.5.0
-    )
-    target_compile_options(benchmark PUBLIC $<$<CXX_COMPILER_ID:GNU>:-Wno-error=deprecated-declarations>)
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+if ("x${INFO_CLI_MISSING_DEPS}x" STREQUAL "xx")
+    message(CHECK_PASS "completed")
+else ()
+    message(CHECK_FAIL "failed")
+    message(FATAL_ERROR "[${PROJECT_NAME}] Missing dependencies that could not have been found: ${INFO_CLI_MISSING_DEPS}")
 endif ()

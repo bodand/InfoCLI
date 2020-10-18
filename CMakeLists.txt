@@ -28,112 +28,113 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if (MSVC)
-    message(FATAL_ERROR "MSVC is not supported. Be a better person and use Clang or GCC. Thank you.")
-    # note that removing this to get access will not get you far, as MSVC will fail to compile
-    # the GNU extension this library is literally based around
-endif ()
+cmake_minimum_required(VERSION 3.16)
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+enable_language(CXX)
 
-## CMake shenanigans
-cmake_minimum_required(VERSION 3.14)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set(CMAKE_CXX_STANDARD 17)
+### Policies ###
+cmake_policy(SET CMP0048 NEW) # project sets VERSION vars
+cmake_policy(SET CMP0091 NEW) # MSVC does not set the runtime library in CMAKE_<LANG>_FLAGS
+cmake_policy(SET CMP0092 NEW) # MSVC does not set the default /W3 in CMAKE_<LANG>_FLAGS
 
+### Modules ###
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 include(Utils)
-include(CMakeDependentOption)
 
-## Project options
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    set(INFO_CLI_MAIN On)
-else ()
-    set(INFO_CLI_MAIN Off)
-endif ()
-
-option(INFO_CLI_BUILD_TESTS "Build the the InfoCLI test suite [Off as dependency]" ${INFO_CLI_MAIN})
-option(INFO_CLI_BUILD_EXAMPLES "Build the the InfoCLI usage examples [Off as dependency]" ${INFO_CLI_MAIN})
-option(INFO_CLI_BUILD_BENCHMARKS "Build the the InfoCLI benchmark [Off]" Off)
-cmake_dependent_option(INFO_CLI_BUILD_SHARED "Build the the InfoCLI as a shared library [!INFO_CLI_BUILD_BENCHMARKS]" On
-                       "NOT INFO_CLI_BUILD_BENCHMARKS" Off)
-NameOption(${INFO_CLI_BUILD_SHARED} "SHARED;STATIC" INFO_CLI_BUILD_TYPE)
-message(STATUS "[InfoCLI] Building as ${INFO_CLI_BUILD_TYPE} library")
-
-## Project
+### InfoCLI Project ###
 project(InfoCLI
-        VERSION 0.1.0
-        LANGUAGES CXX)
+        VERSION 2.0.1
+        LANGUAGES CXX
+        )
 
-## Project settings
-set(INFO_PROJECT_NAME CLI)
-set(INFO_PROJECT_NAMESPACE info::cli)
+### Options ###
+option(INFO_CLI_BUILD_DOCS
+       "Generate the full InfoCLI HTML documentation [Off]"
+       Off
+       )
 
-## Debug flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
+option(INFO_CLI_BUILD_TESTS
+       "Build the unit test suite for InfoCLI [On]"
+       On
+       )
 
-## Project level macros
-set(${INFO_PROJECT_NAME}_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
-set(${INFO_PROJECT_NAME}_HEADER_PATH "${${INFO_PROJECT_NAME}_INCLUDE_DIR}/info/cli")
-set(${INFO_PROJECT_NAME}_TARGET icli)
+option(INFO_CLI_BUILD_STATIC
+       "Build a shared library for InfoCLI instead of a static one. [Off except MSVC]"
+       "${MSVC}"
+       )
+NameOption("${INFO_CLI_BUILD_STATIC}" "STATIC;SHARED" INFO_CLI_BUILD_TYPE)
+message(STATUS "[${PROJECT_NAME}] Building ${INFO_CLI_BUILD_TYPE} library")
 
-## Initialize target
-add_library(${${INFO_PROJECT_NAME}_TARGET} ${INFO_CLI_BUILD_TYPE}
-            src/parse_exception.cpp
-            src/split.cpp
-            src/cli_parser.cpp
-            src/type_parser.cpp
-            src/help_generator.cpp
-            )
-add_library(${INFO_PROJECT_NAMESPACE} ALIAS ${${INFO_PROJECT_NAME}_TARGET})
+### Use C++17 ###
+set(CMAKE_CXX_STANDARD 17)
+add_library(cxx_std INTERFACE)
+add_library(InfoCLI::cxx_std ALIAS cxx_std)
 
-## Require C++17
-set_target_properties(${${INFO_PROJECT_NAME}_TARGET}
-                      PROPERTIES
-                      CXX_STANDARD 17)
+target_compile_features(cxx_std INTERFACE
+                        "cxx_std_17"
+                        )
 
-# Check for required features and
-#  applicable warnings
-include(FeatureTests)
+### Warnings ###
+include(Warnings)
 
-# Add warnings
-target_compile_options(${${INFO_PROJECT_NAME}_TARGET}
-                       PRIVATE
-                       ${${INFO_PROJECT_NAME}_WARNINGS})
-
-# Dependencies
+### Dependencies ###
 include(Dependencies)
 
-## Get dependencies
-target_link_libraries(${${INFO_PROJECT_NAME}_TARGET}
-                      PUBLIC info::utils
-                      PUBLIC ${Hana_LINK_AS}
-                      PUBLIC ${boost_mp11_LINK_AS}
-                      PRIVATE fmt::fmt
-                      PUBLIC dark_city::dark_city
+### info::cli ###
+add_library(cli "${INFO_CLI_BUILD_TYPE}"
+            src/cli_parser.cxx
+            src/option.cxx
+            src/impl/option_builder.cxx
+            src/impl/helpful_option_builder.cxx
+            src/types/type_data.cxx
+            src/types/type_parser.cxx
+            src/exc/no_such_option.cxx
+            src/exc/callback_error.cxx
+            src/exc/bad_option_value.cxx)
+add_library(info::cli ALIAS cli)
+
+target_link_libraries(cli PUBLIC
+                      InfoCLI::cxx_std
+                      InfoCLI::Warnings
+                      fmt::fmt
+                      info::utils
                       )
 
-## Set target properties
-target_include_directories(${${INFO_PROJECT_NAME}_TARGET}
-                           PUBLIC
+target_include_directories(cli PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                            $<INSTALL_INTERFACE:include>
-                           $<BUILD_INTERFACE:${${INFO_PROJECT_NAME}_INCLUDE_DIR}>
                            )
 
-## Optionally enable tests
+target_compile_options(cli PUBLIC
+                       $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
+                       )
+
+target_compile_definitions(cli PUBLIC
+                           -DINFO_CLI_BUILD_STATIC=$<BOOL:${INFO_CLI_BUILD_STATIC}>
+                           -DINFO_CLI_EXPORTS=$<BOOL:$<BUILD_INTERFACE:1>>
+                           )
+
+### Debug ###
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(cli PROPERTIES
+                          CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -pthread -Og")
+endif ()
+
+## Docs ##
+#if (INFO_CLI_BUILD_DOCS)
+#    add_subdirectory(docs)
+#endif ()
+
+# Benchmarks ##
+if (INFO_CLI_BUILD_BENCHMARKS)
+    add_subdirectory(benchmark)
+endif ()
+
+## Tests ##
 if (INFO_CLI_BUILD_TESTS)
+    enable_testing()
     include(CTest)
 
-    message(STATUS "[InfoCLI] Building tests")
     add_subdirectory(test)
-endif ()
-
-## Optionally enable examples
-if (INFO_CLI_BUILD_EXAMPLES)
-    message(STATUS "[InfoCLI] Building examples")
-    add_subdirectory(examples)
-endif ()
-
-## Optionally enable benchmark
-if (INFO_CLI_BUILD_BENCHMARKS)
-    message(STATUS "[InfoCLI] Building benchmarks - are you sure you need this?")
-    add_subdirectory(benchmark)
 endif ()
