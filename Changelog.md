@@ -20,6 +20,11 @@ Format: *major*.*minor*.*patch*
  New *patch* updates are represented in the codename by concatenating the patch
  version + 1 to the end with a dash eg. 'Daedalus-2' for InfoUtils `v1.3.1`.
 
+## VERSION 2.0.2 - Helium-3
+
+## Added:
+ - Re-added auto-help. Sorry for the inconvenience.
+
 ## VERSION 2.0.1 - Helium-2
 
 ### Added:

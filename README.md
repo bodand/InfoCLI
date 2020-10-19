@@ -1,6 +1,9 @@
 # InfoCLI v2
 
-InfoCLI v2 is the rethought version of InfoCLI. It 
+InfoCLI v2 is the rethought version of InfoCLI. Callback remade the DSL used to declare
+options, which allows it to do away with compile-time strings completely: this 
+obviously means terrific improvements to compilation times, and the biggest
+problem of InfoCLI v1.x is fixed.
 
 ## Compatibility
 
@@ -21,7 +24,7 @@ tested.
 ## Usage
 
 The most basic example is as follows, where a basic compiler is modelled.
-It takes `-o` or `--output` to specify how to call the output, and `-O` to
+Callback takes `-o` or `--output` to specify how to call the output, and `-O` to
 specify optimization level. 
 The actual compiler parts are omitted, of course.
 
@@ -78,5 +81,5 @@ directory/subproject, however it requires additional dependencies:
 Benchmarking is done with the Catch2 test library's benchmark capabilities, so
 no other libraries are required.
 
-After configuring the `cli-bench-${numer of options parsed}` targets can be used 
-to run the benchmarks. For the available targets, see the output of CMake.
+After configuring the `cli-bench-${option type}-${numer of options parsed}` targets 
+can be used to run the benchmarks. For the available targets, see the output of CMake.

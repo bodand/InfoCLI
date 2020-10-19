@@ -7,13 +7,50 @@
  */
 
 #include <cassert>
+#include <cstdio>
 #include <cstring>
+#include <string>
+#include <string_view>
+
+#include <fmt/format.h>
 
 #include <info/cli/cli_parser.hxx>
 #include <info/cli/exc/bad_option_value.hxx>
 #include <info/cli/exc/callback_error.hxx>
 #include <info/cli/exc/no_such_option.hxx>
 #include <info/lambda.hpp>
+
+template<class T>
+static std::string
+format_opts(const std::vector<std::pair<std::string_view, T*>>& opts) {
+    std::string ret{'\t'};
+    for (const auto& [name, info] : opts) {
+        const auto& [data, _] = *info;
+
+        auto dashes = name.size() == 1 ? "-"
+                                       : "--";
+
+        if (data.type_name == "bool") {
+            ret += fmt::format(FMT_STRING("{}{}, "),
+                               dashes,
+                               name);
+            continue;
+        }
+
+        auto opt_beg = data.allow_nothing ? '['
+                                          : '<';
+        auto opt_end = data.allow_nothing ? ']'
+                                          : '>';
+
+        ret += fmt::format(FMT_STRING("{}{} {}{}{}, "),
+                           dashes,
+                           name,
+                           opt_beg,
+                           data.type_name,
+                           opt_end);
+    }
+    return ret.substr(0, ret.size() - 2);
+}
 
 void
 info::cli::cli_parser::short_option(char* arg, int argc, char** argv, int& i) {
@@ -75,15 +112,39 @@ info::cli::cli_parser::strip_option(char* opt, bool lng) {
 
 info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
     for (auto& [names, type, help, call] : opts) {
-        auto [it, _] = _helps.emplace(help);
         _callbacks.emplace_back(call);
         auto pos = _callbacks.size() - 1;
+
+        std::vector<help_innards> innards;
         for (const auto& name : names) {
-            _options.emplace(name,
-                             option_info{type,
-                                         pos,
-                                         std::string_view{it->data(), it->size()}});
+            const auto [it, _] = _options.emplace(name,
+                                                  option_info{type, pos});
+            const auto& [str, val] = *it;
+            innards.emplace_back(std::string_view{str.data(), str.size()}, &val);
         }
+
+        if (!_helps.empty()) {
+            _helps.emplace(help, std::move(innards));
+        }
+    }
+    if (!_helps.empty()
+        && _options.find("help") == _options.end()) {
+        _callbacks.emplace_back([&](std::string_view, const char*&) -> bool {
+            for (const auto& [msg, calls] : _helps) {
+                fmt::print(FMT_STRING("\t{}\n"), format_opts(calls));
+
+                fmt::print(FMT_STRING("\t\t{}\n"), msg);
+            }
+
+            std::exit(1);
+        });
+
+        _options.emplace("help",
+                         option_info{rt_type_data(type_data<bool>{}),
+                                     _callbacks.size() - 1});
+        _options.emplace("h",
+                         option_info{rt_type_data(type_data<bool>{}),
+                                     _callbacks.size() - 1});
     }
 }
 
@@ -102,7 +163,7 @@ info::cli::cli_parser::unpacked_shorts(char* arg, int argc, char** argv, int& i)
         throw no_such_option(arg);
     }
 
-    auto& [data, idx, __] = it->second;
+    auto& [data, idx] = it->second;
     const auto& fn = _callbacks[idx];
     assert((bool) fn);
 
@@ -132,7 +193,7 @@ info::cli::cli_parser::packed_shorts(char* arg, int argc, char** argv, int& i) {
     if (it == _options.end()) {
         throw no_such_option(arg);
     }
-    auto& [data, idx, __] = it->second;
+    auto& [data, idx] = it->second;
     auto& fn = _callbacks[idx];
     assert((bool) fn);
 
@@ -181,7 +242,7 @@ info::cli::cli_parser::long_option(int argc, char** argv, int& i) {
         if (it == _options.end()) {
             throw no_such_option(strip_option(const_cast<char*>(opt.data()), true));
         }
-        auto& [_, idx, __] = it->second;
+        auto& [_, idx] = it->second;
         auto& fn = _callbacks[idx];
         assert((bool) fn);
 
@@ -195,7 +256,7 @@ info::cli::cli_parser::long_option(int argc, char** argv, int& i) {
     if (it == _options.end()) {
         throw no_such_option(strip_option(const_cast<char*>(inopt.data()), true));
     }
-    auto& [data, idx, __] = it->second;
+    auto& [data, idx] = it->second;
     auto& fn = _callbacks[idx];
     assert((bool) fn);
 

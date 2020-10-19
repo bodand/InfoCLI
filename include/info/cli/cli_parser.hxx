@@ -12,11 +12,40 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <info/cli/macros.hxx>
 #include <info/cli/option.hxx>
 #include <info/cli/types/type_data.hxx>
+
+namespace info::_cli {
+    template<class Callback>
+    struct INFO_CLI_LOCAL help_text {
+        std::string help_msg;
+        std::vector<Callback> callbacks;
+
+        help_text(std::string help_msg,
+                  std::vector<Callback>&& callbacks)
+             : help_msg(std::move(help_msg)),
+               callbacks(std::move(callbacks)) { }
+
+        bool
+        operator==(const help_text& other) const {
+            return help_msg == other.help_msg;
+        }
+    };
+}
+
+namespace std {
+    template<class Callback>
+    struct hash<info::_cli::help_text<Callback>> {
+        std::size_t
+        operator()(const info::_cli::help_text<Callback>& txt) const {
+            return ::std::hash<std::string>{}(txt.help_msg);
+        }
+    };
+}
 
 namespace info::cli {
     struct INFO_CLI_API cli_parser {
@@ -29,12 +58,16 @@ namespace info::cli {
         struct INFO_CLI_LOCAL option_info {
             rt_type_data type_data;
             std::size_t callback;
-            std::string_view help;
         };
 
-        std::vector<std::function<bool(std::string_view, const char*&)>> _callbacks;
-        std::unordered_set<std::string> _helps;
-        std::unordered_map<std::string, option_info> _options;
+        using callback_type = std::function<bool(std::string_view, const char*&)>;
+        using options_type = std::unordered_map<std::string, option_info>;
+        using help_innards = std::pair<std::string_view, const option_info*>;
+        using help_type = _cli::help_text<help_innards>;
+
+        std::vector<callback_type> _callbacks;
+        options_type _options;
+        std::unordered_set<help_type> _helps;
 
         void short_option(char* arg, int argc, char** argv, int& i);
         void unpacked_shorts(char* arg, int argc, char** argv, int& i);
@@ -43,4 +76,5 @@ namespace info::cli {
 
         INFO_CLI_PURE [[nodiscard]] static char* strip_option(char* opt, bool lng = false);
     };
+
 }
