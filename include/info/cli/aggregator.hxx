@@ -117,7 +117,7 @@ namespace info::_cli {
 
         template<class U>
         auto
-        operator()(std::stack<T>& cont, U&& elem) const {
+        operator()(std::queue<T>& cont, U&& elem) const {
             static_assert(std::is_constructible_v<T, decltype(std::forward<U>(elem))>,
                           "Value of aggregating type is not constructable with given type");
             cont.emplace(std::forward<U>(elem));
@@ -130,10 +130,10 @@ namespace info::_cli {
 
         template<class U>
         auto
-        operator()(std::stack<T>& cont, U&& elem) const {
+        operator()(std::deque<T>& cont, U&& elem) const {
             static_assert(std::is_constructible_v<T, decltype(std::forward<U>(elem))>,
                           "Value of aggregating type is not constructable with given type");
-            cont.emplace(std::forward<U>(elem));
+            cont.emplace_back(std::forward<U>(elem));
         }
     };
 
