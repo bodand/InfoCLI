@@ -20,6 +20,17 @@ Format: *major*.*minor*.*patch*
  New *patch* updates are represented in the codename by concatenating the patch
  version + 1 to the end with a dash eg. 'Daedalus-2' for InfoUtils `v1.3.1`.
 
+## VERSION 2.1.0 - Lithium
+
+## Added:
+ - Documentation for the source's entities
+ - Tutorial for using the library
+ - New name for the library: MSVC most importantly does not build the pretty
+   generic `cli.lib` anymore but `info_cli(d).lib` where `d` is added for 
+   debug builds. This is not considered a breaking change because CMake should
+   take care of the file differences.
+ - Licensing notes
+
 ## VERSION 2.0.2 - Helium-3
 
 ## Added:

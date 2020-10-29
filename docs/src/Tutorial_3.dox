@@ -1,0 +1,141 @@
+/**
+ * \defgroup Tutorial_3 The InfoCLI tutorial/3
+ *
+ * # Tutorial 3 - InfoRTTI & Aggregating types
+ *
+ * As it was hinted at in the previous chapter, InfoCLI tries to figure out
+ * the most it can about types, and then act accordingly to their special
+ * needs. The best example are stdlib containers, all of which are handled
+ * such that multiple values to the same option are not overriding the last
+ * one, but added after them.
+ *
+ * This is done by using a thing I just named as InfoRTTI. Because normal C++
+ * RTTI is pretty much useless in this regard; we need more information about
+ * types that it could ever provide.
+ *
+ * InfoRTTI works by taking information from (a specializable) `info::cli::type_data<T>`
+ * and jams it inside an `info::cli::rt_type_data` for the runtime. The compile-time
+ * type_data objects do not exits at runtime, or at least not for long: during
+ * compile time, when we still know the actual types inside a template, the type
+ * is used to create a temporary `type_data<T>` which is immediately passed to the
+ * constructor of the `rt_type_data` which extracts the info from it, and thus
+ * completely erases the concrete type.
+ *
+ * This runtime object stores information related to parsing objects: what types
+ * of characters they accept, how long may they be, and if they allow to be
+ * passed no arguments, what is the argument to use as a fallback value. This
+ * also stores a human readable name of the type, which is to say, in beta.
+ *
+ * Other than InfoRTTI, InfoCLI uses some other tricks to get more information
+ * and even more relevant behavior for different types. The most notable is for
+ * parsing. All parsers are typed, and perform the best possible conversion
+ * from the input string to the output type.
+ * This typed parsing allows to completely integrate user-defined types into the
+ * parsing scheme with zero overhead compared to other entities: this is
+ * done by specializing the `info::cli::type_parser` class as show
+ * in the following snippet.
+ *
+ * \code
+struct extended_parser_type {
+    int i;
+};
+
+template<>
+struct info::cli::type_parser<extended_parser_type> {
+    info::expected<extended_parser_type, info::cli::parser_opcode>
+    operator()(std::string_view str) const noexcept {
+        if (str == "fail")
+            return INFO_UNEXPECTED{parser_opcode::terminate};
+        return extended_parser_type{42};
+    }
+};
+ * \endcode
+ *
+ * If, for any reason, a type does not have a specialized type_parser, the default
+ * type_parser takes over the remains, and hopes a stream based solution works out.
+ * If it does not, your compiler will inform you in very great detail about it.
+ *
+ * Aggregating types are not to be confused with the aggregate types from The C++ Standard,
+ * and aggregates are not mentioned anymore in this document.
+ * Aggregating types, well, aggregate. That is to say, types that fit the aggregating
+ * template, which is for backwards compatibility inside the `info::_cli` namespace
+ * and is yclept `aggregator_`, are handled differently. Note that this can
+ * be specialized despite its namespace.
+ *
+ * All aggregating types are some kind of containers. By aggregating types we
+ * mean that they keep an aggregated set of values from multiple options' values,
+ * rather than carrying one value which gets overwritten. All stdlib containers
+ * are specialized as aggregating types, which means giving one as an callback
+ * will perform the aggregation procedure defined in the specialized `aggregator_`
+ * class.
+ */
+
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
+
+#include <info/cli.hxx>
+namespace ic = info::cli;
+using namespace ic::udl;
+
+// always false ˇ just used to ignore the main fn in the docs
+/// \cond TUTORIAL_MAIN
+int
+main(int argc, char** argv) {
+    /// \endcond
+
+    std::vector<std::string> includes{"."};
+    bool print_includes = false;
+
+    /// \addtogroup Tutorial_3
+    /// This means we can modify the options defined in \ref Tutorial_2 and
+    /// remove the lambda, basically doing the same thing InfoCLI would've done
+    /// automatically anyways.
+    ///
+    /// By passing the includes vector as is, we get the following parser:
+    /// \code
+    ic::cli_parser cli{
+           "print-includes"_opt
+                  >= "Instead of normal behavior, print the list of include directories "
+                     "and then exit" >>= print_includes,
+           "version"_opt
+                  >= "Instead of normal behavior, print the current version number and exit"
+                     "" >>= [](bool b) {
+               std::cout << "This is Dummy-Compiler v1.0\n";
+               std::exit(1);
+           },
+           "include-dir" / 'I'_opt// fu, clang-format
+                  >= "Append an include directory to search files for during include directives"
+                     "" >>= includes};
+    // ^ isn't it cleaner?
+    /// \endcode
+    ///
+    /// By leaving everything else the same (shown below for convenience),
+    /// and running `cli-tut3` we can check that the two pieces of software behave
+    /// exactly the same.
+    ///
+    /// Before the code repetition, let me introduce the next chapter, and leave:
+    /// in the next and last tutorial we talk about type modifiers and present
+    /// the currently only one: \ref Tutorial_4.
+    ///
+    /// And for the code from the last chapter, repeated:
+    /// \code
+    std::vector<std::string_view> rem;
+    try {
+        rem = cli(argc, argv);
+    } catch (const std::exception& ex) {
+        std::cerr << ex.what() << '\n';
+        return -1;
+    }
+
+    std::ostream_iterator<std::string_view> out(std::cout, "\n");
+    // reused later                         ^~~
+    if (print_includes) {
+        std::copy(includes.begin(), includes.end(), out);
+        return 2;
+    }
+
+    std::copy(std::next(rem.begin()), rem.end(), out);
+    /// \endcode
+}

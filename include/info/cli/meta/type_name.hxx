@@ -1,4 +1,4 @@
-/** InfoCLI project
+/*
  * Copyright (c) 2020 bodand
  * Licensed under the BSD 3-Clause license
  *
@@ -11,6 +11,17 @@
 #include <string_view>
 
 namespace info::cli::meta {
+    /**
+     * \brief A rather crude attempt at human readable type-names
+     *
+     * Returns a mostly readable name for a type.
+     *
+     * \warning This is highly experimental and probably will get replaced,
+     * by something more customizable and that provides better results.
+     *
+     * \tparam T The type whose name we want.
+     * \return The name of the type, as the compiler sees it, but not mangled
+     */
     template<typename T>
     constexpr auto
     type_name() {
@@ -32,5 +43,17 @@ namespace info::cli::meta {
         name.remove_prefix(pfx_len);
         name.remove_suffix(sfx_len);
         return name;
+    }
+
+    template<>
+    constexpr auto
+    type_name<std::string>() {// something like this is the future
+        return "string";      // but natch not specialized function templates
+    }
+
+    template<>
+    constexpr auto
+    type_name<std::string_view>() {
+        return "string";
     }
 }

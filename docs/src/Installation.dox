@@ -1,0 +1,197 @@
+/*
+ * Copyright (c) 2020 bodand
+ * Licensed under the BSD 3-Clause license
+ *
+ * The tutorial for installing InfoCLI
+ */
+
+namespace info::cli {
+    /**
+     * \defgroup Installation Installing InfoCLI
+     *
+     * # How to install
+     *
+     * InfoCLI can be installed in two ways: 1) you go download the sources,
+     * and build it, then use CMake's installation capabilities to install globally
+     * on your computer; or 2) if you are using CMake, using the `FetchContent`
+     * module is an easy option for getting InfoCLI.
+     *
+     * If you are likely to use the project multiple times, in multiple projects
+     * installing locally is usually worth it, because then you don't have to
+     * download and build it every time you use InfoCLI in a project.
+     *
+     * Installing project-wise, however, is easier: you just include a CMake
+     * standard module, make one call to a function and another and you are done.
+     * This will allow relocating your project to another computer which may not
+     * have InfoCLI installed as CMake will do all the things you need for the
+     * dependency.
+     *
+     * Choose wisely.
+     *
+     * The following steps are rather beginner friendly, and only assume a really
+     * basic knowledge of CMake. If you are here for some links you don't want to
+     * type out, they stand out, as everything important is either bold or in
+     * monospace.
+     *
+     * After taking our chosen path, everyone, let's meet in the last section!
+     *
+     * ## Path 1: Installing from sources
+     *
+     * So you have chosen to brave yourself for the hideous monsters of compiling
+     * a library yourself. Be not afraid, it is rather easy nowadays.
+     *
+     * ### Getting the sources
+     *
+     * This is the most important step, because without it you can't do anything.
+     * InfoCLI sources are available for download at the git URLs:
+     * `https://github.com/bodand/InfoCLI.git` or `git@github.com:bodand/InfoCLI.git`.
+     * If you, for some reason, don't want to deal with git, you can get the sources
+     * as a zip archive from github as well [here](https://github.com/bodand/InfoCLI/archive/master.zip).
+     *
+     * After you have the sources in a nice and cozy directory, you can go to the
+     * next step.
+     *
+     * ### Configuring CMake
+     *
+     * Since InfoCLI is a CMake project, you need CMake to configure it for building.
+     * It is also useful for using the library, although you can do that manually if you
+     * feel like your life's been too easy recently.
+     *
+     * After `chdir`ing into the nice and cozy source directory you established
+     * in the last step, you can use `cmake` to configure the project like so:
+     * ```sh
+     * cmake -S . -B _build
+     * ```
+     * This'll build the default configuration for InfoCLI without any extras
+     * or optional targets.
+     *
+     * While in most cases the defaults should be what you desire, the following
+     * macros can be passed to CMake to customize your dearest InfoCLI build:
+     *
+     *  - `INFO_CLI_BUILD_DOCS:BOOL`: Builds this documentation and create the
+     *                                example targets that are presented during
+     *                                the tutorial. Requires Doxygen to be installed.
+     *                                Default: `Off`.
+     *  - `INFO_CLI_BUILD_TESTS:BOOL`: Build the test-suite for InfoCLI. Default: `On`.
+     *  - `INFO_CLI_BUILD_BENCHMARKS:BOOL`: Build the set of benchmarks that are used
+     *                                      to check InfoCLI's performance. Additionally
+     *                                      requires Boost to be installed, and installs
+     *                                      cxxopts locally for the project if the system
+     *                                      does not have it. Default: `Off`.
+     *  - `INFO_CLI_BUILD_STATIC:BOOL`: Build InfoCLI as a static library instead of a
+     *                                  shared one. Default: `On` for MSVC, `Off` otherwise.
+     *
+     * It is advised to generate a `Release` build by adding `-DCMAKE_BUILD_TYPE=Release`
+     * if you are not working on InfoCLI itself, and are strictly a consumer of the library.
+     * Other than this, standard CMake options obviously apply.
+     *
+     * ### Building the library
+     *
+     * You can either go out of your way and call the build-system the project
+     * was generated for, or you can leave everything to CMake and say:
+     *
+     * ```sh
+     * cmake --build _build
+     * ```
+     *
+     * This'll build InfoCLI in the previously configured `_build` directory.
+     * If you ended up building benchmarks, or wish to see one of the examples
+     * you just need to extend the call with the target like in these examples:
+     *
+     * ```sh
+     * cmake --build _build --target cli-bench-gnu-500
+     * cmake --build _build --target cli-tut0-ex1
+     * ```
+     *
+     * ### Installation
+     *
+     * Now you have the binary files built, and the only thing you need now is
+     * copy them into a place where you can find it by simply using `find_package`
+     * in your fancy project.
+     *
+     * This, as seen previously, is rather easy as well, since you can just let
+     * CMake do it for you. Note however that this CMake call may need sudo or
+     * administrator privileges, so be prepared for that.
+     *
+     * ```sh
+     * cmake --install _build
+     * ```
+     *
+     * And you are done! Now your fancy project can use the fresh InfoCLI build
+     * you just cooked up.
+     * <div style="text-align: right">GOOD END.</div>
+     *
+     * ## Path 2: FetchContent
+     *
+     * So you have decided to let CMake do the heavy lifting, while you just
+     * watch over the happings as a dutiful taskmaster. Then let the lord show
+     * you what needs be done, so you can correctly issue the commands.
+     *
+     * ### Include the module
+     *
+     * As a well-established C++ programmer yourself, you most likely have shown
+     * visible dissatisfaction with the C preprocessor's dealings with your elegant
+     * C++ codebase on multiple occasions, like it is expected of you,
+     * most gruesomely against the includes: but you have hope, since modules,
+     * the saviors of C++ programmers are coming. Well, in CMake you get a half
+     * done cocktail: you have modules and you need to include them.
+     *
+     * The module we need is the `FetchContent` module, so now it makes sense
+     * that you have to incldue it like so:
+     * ```cmake
+     * include(FetchContent)
+     * ```
+     *
+     * [Note to people who heard about `ExternalProject_Add`: Stop it. If you have
+     * a CMake project, do not rely on `ExternalProject` as it'll just make your
+     * life hard, and your CMake scripts atrocious. It is most certainly more
+     * powerful than `FetchContent` but, as with C++, always follow the *Onion Principle*:
+     * if you do not need the generality and power of a more complex structure, use
+     * the more specialized, and weaker constructs; they'll serve you well.  -- end note]
+     *
+     * ### Fetch the contents
+     *
+     * Now that you have the tools, you only need to use them: it is quite simple,
+     * really.
+     *
+     * ```cmake
+     * FetchContent_Declare(InfoCLI
+     *                      GIT_REPOSITORY https://github.com/bodand/InfoCLI.git
+     *                      GIT_TAG        v2.1.0
+     *                      )
+     * FetchContent_MakeAvailable(InfoCLI)
+     * ```
+     *
+     * And with that, you are ready and you can freely use InfoCLI within your
+     * project without having to do anything with it. It'll nicely compile
+     * into your project. It's nice, isn't it?
+     *
+     * ## Using the library
+     *
+     * And at last, both groups meet again: the way to use the library is independent
+     * of how one obtains it.
+     * The following example code assumes your executable / library target
+     * is called `your_fancy_target`.
+     *
+     * First, you have to link the library into your target: this is a singular
+     * call to `target_link_libraries`:
+     * ```cmake
+     * target_link_libraries(your_fancy_target
+     *                       PRIVATE info::cli
+     *                       )
+     * ```
+     * InfoCLI can, and should, always be referenced as `info::cli` inside CMake,
+     * because then CMake can easily figure out which libraries to link, where
+     * to find them, and will not conflict with other libraries that may be
+     * called `cli`. (All Info* projects are namespaced `info::` inside CMake.)
+     *
+     * Second, you are done. Henceforth, you can start including `<info/cli.hxx>`
+     * and linking against the the binary file of InfoCLI.
+     *
+     * For the usage of the library, see the set of tutorials starting at \ref Tutorial_0.
+     * For the reference, see the other parts of the doxygen documentation.
+     *
+     * Have fun, and see you in the tutorial.
+     * <div style="text-align: right">bodand</div>
+     */
+}

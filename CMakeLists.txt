@@ -36,6 +36,32 @@ enable_language(CXX)
 cmake_policy(SET CMP0048 NEW) # project sets VERSION vars
 cmake_policy(SET CMP0091 NEW) # MSVC does not set the runtime library in CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0092 NEW) # MSVC does not set the default /W3 in CMAKE_<LANG>_FLAGS
+cmake_policy(SET CMP0009 NEW) # Do not follow symlinks in GLOB_RECURSE
+
+### Custom Properties ###
+define_property(TARGET
+                PROPERTY SOURCE_EXTENSION
+                BRIEF_DOCS "The file extension of source files."
+                FULL_DOCS [[The file extension used by the target for source
+                            files. eg. cpp or cxx]]
+                )
+
+define_property(TARGET
+                PROPERTY HEADER_EXTENSION
+                BRIEF_DOCS "The file extension of header files."
+                FULL_DOCS [[The file extension used by the target for header
+                            files. eg. hpp or hxx]]
+                )
+
+define_property(TARGET
+                PROPERTY INCLUDE_FILES
+                BRIEF_DOCS "The list of include files for the target"
+                FULL_DOCS [[The list of the absolute paths of the files that are
+                            used in the target as included files. Basically the
+                            list of files used found in the include directories
+                            whoso extensions match the target's HEADER_EXTENSION
+                            property.]]
+                )
 
 ### Modules ###
 include(GNUInstallDirs)
@@ -44,7 +70,7 @@ include(Utils)
 
 ### InfoCLI Project ###
 project(InfoCLI
-        VERSION 2.0.1
+        VERSION 2.1.0
         LANGUAGES CXX
         )
 
@@ -57,6 +83,11 @@ option(INFO_CLI_BUILD_DOCS
 option(INFO_CLI_BUILD_TESTS
        "Build the unit test suite for InfoCLI [On]"
        On
+       )
+
+option(INFO_CLI_BUILD_BENCHMARKS
+       "Build the benchmarks for InfoCLI's option parsing. [Off]"
+       Off
        )
 
 option(INFO_CLI_BUILD_STATIC
@@ -94,6 +125,22 @@ add_library(cli "${INFO_CLI_BUILD_TYPE}"
             src/exc/bad_option_value.cxx)
 add_library(info::cli ALIAS cli)
 
+set(_CLI_SRC_EXT "cxx")
+set(_CLI_HDR_EXT "hxx")
+file(GLOB_RECURSE _CLI_INCLUDE_FILES
+     LIST_DIRECTORIES false
+     CONFIGURE_DEPENDS
+     "${CMAKE_SOURCE_DIR}/include/*.${_CLI_HDR_EXT}"
+     )
+
+set_target_properties(cli PROPERTIES
+                      OUTPUT_NAME "info_cli$<$<CONFIG:Debug>:d>"
+                      SOURCE_EXTENSION "${_CLI_SRC_EXT}"
+                      HEADER_EXTENSION "${_CLI_HDR_EXT}"
+                      INCLUDE_FILES "${_CLI_INCLUDE_FILES}"
+                      )
+
+
 target_link_libraries(cli PUBLIC
                       InfoCLI::cxx_std
                       InfoCLI::Warnings
@@ -122,9 +169,9 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif ()
 
 ## Docs ##
-#if (INFO_CLI_BUILD_DOCS)
-#    add_subdirectory(docs)
-#endif ()
+if (INFO_CLI_BUILD_DOCS)
+    add_subdirectory(docs)
+endif ()
 
 # Benchmarks ##
 if (INFO_CLI_BUILD_BENCHMARKS)

@@ -1,0 +1,145 @@
+/**
+ * \defgroup Tutorial_2 The InfoCLI tutorial/2
+ *
+ * # Tutorial 2 - Functor callbacks
+ *
+ * Now the next thing that's important is functor callbacks. They allow
+ * you to execute arbitrary code when encountering an option. They are perfectly
+ * generic and therefore can be considered the innermost circle of the onion.
+ * Using them allows you to do anything, but in a lot of cases you likely have
+ * another option, which requires less typing and possibly easier to reason about.
+ *
+ * In the next example, we will construct two things I'd consider using functor
+ * callbacks for, so that in the next Tutorial I can show how the first's bone better.
+ *
+ * First, we take a vector which will continuously be appended with the value
+ * of the options value. Not knowing of the features presented in the future
+ * tutorials, this would be quite a logical step to take, say I wanted to implement
+ * something like `-I` from your favorite compiler (MSVC also accepts `-I` instead of `/I`):
+ * hence our project is: take an arbitrary number of `-I` parameters and then
+ * print out the include directories if `--print-includes` was given, otherwise
+ * print the names of the operands, like MSVC does during compilation.
+ *
+ * In the second case, `--version`, will be used to print out some version information,
+ * and the the program will exit. This is exactly how one'd go around implementing
+ * help if they didn't want Auto-Help's help.
+ * Currently, InfoCLI does not offer an Auto-Version similar to Auto-Help, although
+ * some ideas are in the making for the future.
+ */
+
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
+
+#include <info/cli.hxx>
+namespace ic = info::cli;
+using namespace ic::udl;
+
+// always false ˇ just used to ignore the main fn in the docs
+/// \cond TUTORIAL_MAIN
+int
+main(int argc, char** argv) {
+    /// \endcond
+
+    /// \addtogroup Tutorial_2
+    /// Natch, we need to define our variables we are planning on dealing with.
+    /// For the includes, let's get a vector of strings and for the print option,
+    /// let's use a simple boolean:
+    /// \code
+    std::vector<std::string> includes{"."};
+    bool print_includes = false;
+    /// \endcode
+    /// Note that we still initialize variables, because as mentioned in \ref Tutorial_0
+    /// InfoCLI may not initialize it for us.
+    /// It's also worth mentioning that we have a value in the vector by default,
+    /// this lets us see how InfoCLI does not disturb the original values for the
+    /// callback variables.
+    ///
+    /// Now for the option definitions: the thing we already know is the simple
+    /// boolean flag. No need going into more depth about that. The interesting
+    /// things start with the includes callback: we are not aware of a better method
+    /// at the moment, so we opt for a functor, a lambda, and do things manually.
+    ///
+    /// Let's talk about functors. The functors accepted by InfoCLI need to meet
+    /// two basic requirements:
+    ///  - they shall only have 1 parameter;
+    ///  - and that parameter must not be generic otherwise behavior is undefined;
+    ///    ie. `[](auto){}` is not legal and will probably lead to some nigh
+    ///    undecipherable template instantiation error.
+    /// If you meet these, then the semantics of the functor call are mostly the
+    /// same if it were a simple variable callback: the type of the argument is
+    /// calculated and then the command line options are handled accordingly,
+    /// and the value parsed into the requested type (if possible) is given
+    /// to the callback, which then can do whatever it wants.
+    ///
+    /// Let's see how this looks like in code. Our vector parameter is incessantly
+    /// appended to, while the version lambda just prints version and exits like
+    /// a good boy:
+    /// \code
+    ic::cli_parser cli{
+           "print-includes"_opt
+                  >= "Instead of normal behavior, print the list of include directories "
+                     "and then exit" >>= print_includes,
+           "version"_opt
+                  >= "Instead of normal behavior, print the current version number and exit"
+                     "" >>= [](bool b) {
+               std::cout << "This is Dummy-Compiler v1.0\n";
+               std::exit(1);
+           },
+           "include-dir" / 'I'_opt
+                  >= "Append an include directory to search files for during "
+                     "include directives" >>= [&includes](std::string_view s) {
+               // string_view and string are handled equally by InfoCLI    ^
+               includes.emplace_back(s.begin(), s.end());
+           }};
+    /// \endcode
+    ///
+    /// With this every argument to include-dir will get appended to the include
+    /// directories, version will print something and exit, and last but not least
+    /// print-includes will set a flag to ignore normal business logic, and
+    /// print the includes instead.
+    ///
+    /// As you can see, the parser invocation is still the same old mechanism.
+    /// InfoCLI is completely ignorant of what type of callback you gave it;
+    /// a variable or a functor: it will do its thing completely the same way.
+    /// \code
+    std::vector<std::string_view> rem;
+    try {
+        rem = cli(argc, argv);
+    } catch (const std::exception& ex) {
+        std::cerr << ex.what() << '\n';
+        return -1;
+    }
+    /// \endcode
+    ///
+    /// And now for the business logic. First we check if the print_includes
+    /// flag got set: if it did, we drop everything, print our stuff and exit:
+    /// \code
+    std::ostream_iterator<std::string_view> out(std::cout, "\n");
+    // reused later                         ^~~
+    if (print_includes) {
+        std::copy(includes.begin(), includes.end(), out);
+        return 2;
+    }
+    /// \endcode
+    ///
+    /// With that out of the way, we can focus on our really complex, and tiring
+    /// business logic: print all operands to the screen.
+    /// As we saw previously, a vector of string_views returned by the cli
+    /// parser object's invocation will contain the operands passed to the program
+    /// from the command line. However, if you tried out the previous examples
+    /// you saw that they print out the name of the executable itself, and we
+    /// do not want that, hence we just skip the first element in the operands
+    /// list:
+    /// \code
+    std::copy(std::next(rem.begin()), rem.end(), out);
+    /// \endcode
+    ///
+    /// You can, as always try this example by compiling and running `cli-tut2`.
+    ///
+    /// Join us in the next chapter, as we detail how this could have been done
+    /// without having to write the vector callback manually, and take a quick peek
+    /// into the inner workings of InfoCLI, or more precisely, look at how it
+    /// decides how to handle different types: \ref Tutorial_3
+}

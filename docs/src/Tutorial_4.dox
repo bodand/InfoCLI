@@ -1,0 +1,117 @@
+/**
+ * \defgroup Tutorial_4 The InfoCLI tutorial/4
+ *
+ * # Tutorial 4 - Type modifiers
+ *
+ * InfoCLI adds a possibility for modifying behaviors of some types by wrapping
+ * them in so called 'type modifiers' and then passing those to the callback.
+ *
+ * To create a type modifier one currently needs to specialize the followings:
+ *  - `info::cli::type_modifier_<T>` to register the type modifier into InfoCLI's
+ *    set of type modifiers, and to allow assigning through the modifier to
+ *    the original variable.
+ *  - `info::_cli::aggregator_<T>`, because modified types count as aggregating,
+ *    even if they do not otherwise meet the requirements of an aggregating type.
+ *    This is because this way, you can execute arbitrary code for an assignment
+ *    to a modified type.
+ *  - `info::cli::meta::expected_type_<T>` to refer to itself type. This is because
+ *    aggregating types'd be treated differently.
+ *  - `info::cli::meta::referenced_type_<T>` to return \c T& for \c modify<T>.
+ *  - `info::cli::type_data<T>` to contain all the required type information needed
+ *    by InfoRTTI.
+ *  - `info::cli::type_parser<T>` which will do the actual parsing. If you don't
+ *    want to modify parsing rules, just inherit \c type_parser<modify<T>> from \c type_parser<T>.
+ *
+ * That's a lot of specializations, but as with the momentarily shown \c repeat<T>
+ * modifier, it can make your cli parser definition much more pleasing.
+ */
+
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
+
+#include <info/cli.hxx>
+namespace ic = info::cli;
+using namespace ic::udl;
+
+
+/// \addtogroup Tutorial_4
+/// Provided modifier(s) are in the \c extra/ directory, and need to be
+/// included separately, so for the repeat modifier we need include
+/// \c <info/cli/extra/repeat.hxx>.
+#include <info/cli/extra/repeat.hxx>
+
+// always false ˇ just used to ignore the main fn in the docs
+/// \cond TUTORIAL_MAIN
+int
+main(int argc, char** argv) {
+    /// \endcond
+
+    /// \addtogroup Tutorial_4
+    /// For this example we will just print out \c really times the number of
+    /// the -v options passed, like so:
+    /** \addtogroup Tutorial_4
+     * \verbatim
+    We are really really really really verbose
+    \endverbatim
+     */
+    /// \addtogroup Tutorial_4
+    /// Or just print nothing if none was given. For this, we need a counter
+    /// that counts our verbosity:
+    /// \code
+    int verbosity = 0;
+    /// \endcode
+    ///
+    /// Now, to constantly increase a value by one, you'd need to 1) use a functor
+    /// callback, which usually means you overcomplicated your parsing; and 2)
+    /// on the command line, the user'd still need to give a value to the options,
+    /// because by default `int` does not accept nothing.
+    ///
+    /// To fix all these problems, we have \c info::cli::repeat<T>, whose only
+    /// purpose is to sum integral types instead of overwriting the last value.
+    /// Also, repeat modifies the type_data such that it now accepts nothing and
+    /// has a default value of 1.
+    ///
+    /// Knowing that we can easily wrap our \c verbosity variable in a repeat
+    /// like so:
+    /// \code
+    ic::cli_parser cli{
+           'v'_opt >>= ic::repeat{verbosity}};
+    /// \endcode
+    ///
+    /// Now `-vvv` will end up with verbosity = 3, instead of a parsing error.
+    ///
+    /// Our current program does not care about operands, so we just void them.
+    /// Other than that, our parser routine is the same as always:
+    /// \code
+    try {
+        (void) cli(argc, argv);
+    } catch (const std::exception& ex) {
+        std::cerr << ex.what() << '\n';
+        return -1;
+    }
+    /// \endcode
+    ///
+    /// Now we need two things:
+    /// if our verbosity is zero we exit:
+    /// \code
+    if (verbosity == 0) {
+        return 0;
+    }
+    /// \endcode
+    /// Otherwise, we print `verbosity - 1` times \c really to the output:
+    /// \code
+    std::cout << "We are ";
+    for (int i = 1; i < verbosity; ++i) {
+        std::cout << "really ";
+    }
+    std::cout << "verbose!\n";
+    /// \endcode
+    ///
+    /// You can try this example by compiling and running \c cli-tut4.
+    ///
+    /// And with that we are at the end of our Tutorial Series. Now you know
+    /// how to use the InfoCLI library to define options for your programs.
+    /// Have fun using it.
+}
