@@ -1,0 +1,168 @@
+/**
+ * \defgroup Tutorial_0 The InfoCLI tutorial/0
+ *
+ * After you installed InfoCLI you now only need to learn how to use it to
+ * get fast and convenient CLI parsing for your project. These tutorials
+ * will present the capabilities of InfoCLI step by step, going down the
+ * layers of the onion.
+ *
+ * # Includes
+ *
+ * Before we begin with the tutorials, let me quickly show the includes
+ * and other standards stuff, that's not really related to usage, but still
+ * needs to be shown.
+ *
+ * For the includes, InfoCLI is aggregated into one (\*1\*) header file, which
+ * will include everything you need. There are extras in the `extra/` directory
+ * but one does not need to worry about that. You don't need to worry about
+ * stuff like ending up with meaningless includes, because the only optional
+ * includes are the extras mentioned before, everything else is actually required
+ * so you'd have to include it manually anyways.
+ *
+ * ```c++
+ * #include <info/cli.hxx>
+ * ```
+ *
+ * The other thing may want to include is the exception types from `exc/`.
+ * If you specially want to deal with specific exceptions, you need to include
+ * some of these headers, but if you only care about the whole exception business
+ * (and with CLI parsing, if you ask me you should) that there was an exception,
+ * tell the user what they did wrong and exit.
+ *
+ * The other thing is the namespace structure. Everything resides in the
+ * `info::cli` namespace, so if you want to `using namespace` use that.
+ * The namespace `info::_cli` contains implementation details, whose
+ * behavior may change with even a patch version change.
+ * The other namespace that is useful, and is technically required, but not
+ * really to be `using namespace`'d is `info::cli::udl`. This contains the
+ * User Defined Literals that are used for the DSL to create the options.
+ * Without it, the DSL works, but gets a bit (or even more, depending
+ * on your world-view) clunky.
+ * The tutorials use the alias `ic` for `info::cli` and
+ * have `ic::udl` `using namespace`'d.
+ *
+ * And with this out of the way, let's learn actual semantics, and not
+ * language scaffolding.
+ */
+
+#include <iostream>
+#include <iterator>
+#include <string>
+
+#include <info/cli.hxx>
+namespace ic = info::cli;
+using namespace ic::udl;
+
+// always false ˇ just used to ignore the main fn in the docs
+/// \cond TUTORIAL_MAIN
+int
+main(int argc, char** argv) {
+    /// \endcond
+
+    bool force = false;
+    std::string msg;
+
+    // clang-format off
+    ///
+    ///\addtogroup Tutorial_0
+    ///
+    /// # Tutorial 0 - Basic callback values
+    ///
+    /// The easiest thing you can use to create a parser is to get yourself a set
+    /// of variables which you want to fill depending on the CLI options.
+    ///
+    /// Let's say I have 2 variables `bool force`, and `std::string msg`.
+    /// Where they denote something significant in my overall business logic, but
+    /// their purpose is insignificant to InfoCLI: we only need to know their types,
+    /// which we, thankfully to C++'s type system, always do, so let's get started.
+    ///
+    /// The first thing you need to do is create a parser object.
+    /// This takes an initializer list of the options you want to parse for.
+    /// \code{c++}
+    ic::cli_parser cli{
+    /// \endcode
+    /// All options must have at least one name, and a callback they can call.
+    /// For convenience, single variables act as a special callback, the case we
+    /// are examining now: they are set to the value the command line specifies,
+    /// without having to deal with lambdas and whatnot.
+    ///
+    /// Now to construct an option. All options at least must have a name and
+    /// a callback value.
+    /// Option names are strings that have been converted to an internal type
+    /// representing option names by the _opt udl, like any of the following:
+    /// \c "name"_opt , or \c 'n'_opt.
+    ///
+    /// The variable, or as you will see later, any callback, can be specified
+    /// by the shift-right-and-set operator, you know the one you use every other
+    /// second: `>>=`.
+    /// Now, we can piece together our first option: if the user specifies
+    /// `--force` we want to set our variable of the same name to true.
+    /// Note that, if the option is not present in any form in the input,
+    /// the variable will not be modified in any way, so while InfoCLI can
+    /// handle uninitialized callback variables, you should still initialize
+    /// them.
+    /// \code
+    "force"_opt >>= force,
+    /// \endcode
+    ///
+    /// You can have multiple names for one option, for example GNU Make has
+    /// the `-s`, `--silent`, and `--quiet` options for the same thing. InfoCLI
+    /// can do that as well: you just need to divide them!
+    ///
+    /// With an object created by the _opt udl, the division operator (`/`) means
+    /// alternatives for the name of option. (Think ABNF ([RFC 5234](https://tools.ietf.org/html/rfc5234))
+    /// where alteration is done with the forward slash.)
+    /// You can alternate options on characters and strings, and the _opt udl can
+    /// be on either (or both) sides of the operator:
+    /// ``"name1"_opt / "name2" / 'n'``, or ``"name" / 'N'_opt``.
+    ///
+    /// Now we can create the other option which should work for either `-m`,
+    /// or `--message`, like so:
+    /// \code
+    'm'_opt / "message" >>= msg};
+    /// \endcode
+    /// The closing curly-brace is the end of the cli initializer list, since
+    /// we are now finished with defining our options.
+    /// The next thing we need to do, is call the option parser with the command
+    /// line arguments. This is rather easy, you just need to call the previously
+    /// created object with the `argc`, and `argv` parameters from the main function:
+    /// \code
+    std::vector<std::string_view> rem;
+    try {
+        rem = cli(argc, argv);
+    } catch (const std::exception& ex) {
+        std::cerr << ex.what() << '\n';
+        return -1;
+    }
+    /// \endcode
+    ///
+    /// First, the try-catch thingy:
+    /// the parser call can throw if the input arguments are ill-formed
+    /// like missing an argument for an option that *needs* one, or
+    /// refer to options that have not been defined.
+    ///
+    /// Second, that `rem` vector. InfoCLI returns a vector of string_views to
+    /// all non-option values that *rem*ains after removing the options from them.
+    /// Here we don't do anything with them, as can easily be seen, but if, for
+    /// example the program expects operands this is the way it can get access to
+    /// them.
+    ///
+    /// Now for the really grandiose business logic we just print what we have
+    /// found on the command line:
+    /// \code
+    std::cout << std::boolalpha
+              << "Force enabled: " << force
+              << "\nMessage: " << msg
+              << "\nLeft-back operands: ";
+    std::ostream_iterator<std::string_view> out(std::cout, " ");
+    std::copy(rem.begin(), rem.end(), out);
+    /// \endcode
+    ///
+    /// And with that we are done.
+
+    ///
+    /// If you want to try out this project, compile the `cli-tut0` target.
+    ///
+    /// In the next tutorial, we learn how to deal with help commands, because
+    /// those are nothing more just tedious monologuing to the compiler: \ref Tutorial_1
+}

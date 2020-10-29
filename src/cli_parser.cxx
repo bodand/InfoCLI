@@ -1,4 +1,4 @@
-/** InfoCLI project
+/*
  * Copyright (c) 2020 bodand
  * Licensed under the BSD 3-Clause license
  *
@@ -23,7 +23,7 @@
 template<class T>
 static std::string
 format_opts(const std::vector<std::pair<std::string_view, T*>>& opts) {
-    std::string ret{'\t'};
+    std::string ret;
     for (const auto& [name, info] : opts) {
         const auto& [data, _] = *info;
 
@@ -31,7 +31,7 @@ format_opts(const std::vector<std::pair<std::string_view, T*>>& opts) {
                                        : "--";
 
         if (data.type_name == "bool") {
-            ret += fmt::format(FMT_STRING("{}{}, "),
+            ret += fmt::format("{}{}, ",
                                dashes,
                                name);
             continue;
@@ -42,7 +42,7 @@ format_opts(const std::vector<std::pair<std::string_view, T*>>& opts) {
         auto opt_end = data.allow_nothing ? ']'
                                           : '>';
 
-        ret += fmt::format(FMT_STRING("{}{} {}{}{}, "),
+        ret += fmt::format("{}{} {}{}{}, ",
                            dashes,
                            name,
                            opt_beg,
@@ -123,7 +123,7 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
             innards.emplace_back(std::string_view{str.data(), str.size()}, &val);
         }
 
-        if (!_helps.empty()) {
+        if (!help.empty()) {
             _helps.emplace(help, std::move(innards));
         }
     }
@@ -131,9 +131,9 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
         && _options.find("help") == _options.end()) {
         _callbacks.emplace_back([&](std::string_view, const char*&) -> bool {
             for (const auto& [msg, calls] : _helps) {
-                fmt::print(FMT_STRING("\t{}\n"), format_opts(calls));
+                fmt::print("\t{}\n", format_opts(calls));
 
-                fmt::print(FMT_STRING("\t\t{}\n"), msg);
+                fmt::print("\t\t{}\n", msg);
             }
 
             std::exit(1);

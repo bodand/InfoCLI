@@ -74,3 +74,36 @@ function(GetRepoTypeFromURL RepoURL oRepoType)
         set("${oRepoType}" SVN PARENT_SCOPE)
     endif ()
 endfunction()
+
+## DefineNewTutorialTarget(TutorialId)
+#
+# Creates a target named cli-tut{TutorialId} from the doxygen .dox file with
+# the same id.
+# The target uses C++17 and links to info::cli, whose shared object is copied
+# into the targets directory.
+macro(DefineNewTutorialTarget TutorialId)
+    set(_TGT_NAME cli-tut${TutorialId})
+
+    add_executable(${_TGT_NAME})
+    target_sources(${_TGT_NAME} PRIVATE
+                   "${CMAKE_SOURCE_DIR}/docs/src/Tutorial_${TutorialId}.dox")
+
+    get_target_property(_TGT_SOURCES ${_TGT_NAME} SOURCES)
+    set_source_files_properties(${_TGT_SOURCES} PROPERTIES
+                                LANGUAGE CXX
+                                )
+
+    target_link_libraries(${_TGT_NAME}
+                          PRIVATE info::cli
+                          )
+    target_compile_features(${_TGT_NAME}
+                            PRIVATE cxx_std_17
+                            )
+
+    add_custom_command(TARGET ${_TGT_NAME} POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:info::cli>" "$<TARGET_FILE_DIR:${_TGT_NAME}>"
+                       )
+
+    unset(_TGT_NAME)
+    unset(_TGT_SOURCES)
+endmacro()

@@ -1,4 +1,4 @@
-//// BSD 3-Clause License
+// BSD 3-Clause License
 //
 // Copyright (c) 2020, bodand
 // All rights reserved.
@@ -42,11 +42,35 @@
 #include <info/cli/meta/meta.hxx>
 
 namespace info::cli::meta {
+    /**
+     * \brief A type used for dissecting functors
+     *
+     * Takes a functor type (or a function pointer type) which can be queried
+     * for the typelist of arguments. This is used to determine the type
+     * accepted by lambda a function pointer option callbacks.
+     *
+     * If the given type cannot be dissected (not a functor type) the result
+     * is a single element typelist containing only the given type, and also
+     * the \c value member denotes failure.
+     *
+     * The second template argument is ignored.
+     *
+     * \tparam T The type to dissect
+     */
     template<class T, class>
     struct INFO_CLI_LOCAL dissector : std::false_type {
-        using type = tlist<T>;
+        using type = tlist<T>; ///< The "result" typelist containing the input type
     };
 
+    /**
+     * \copybrief dissector
+     *
+     * Dissects lambda and other functor types that provide an operator()
+     * member function. After the dissection, the arguments of this member
+     * function are returned.
+     *
+     * \tparam F The lambda type to dissect
+     */
     template<class F>
     class INFO_CLI_LOCAL dissector<
            F,
@@ -65,20 +89,42 @@ namespace info::cli::meta {
         }
 
     public:
-        constexpr const static auto ptr = &F::operator();
-
-        using type = decltype(dissector::dis(ptr));
+        using type = decltype(dissector::dis(&F::operator()));///< The typelist of arguments
     };
 
+    /**
+     * \copybrief dissector
+     *
+     * Dissects a given function type. Its parameters are returned.
+     *
+     * \tparam R The return type of the function. Ignored.
+     * \tparam Args... The arguments of the function
+     */
     template<class R, class... Args>
     struct INFO_CLI_LOCAL dissector<R(Args...), void> : std::true_type {
-        using return_type = R;
-        using type = tlist<Args...>;
+        using type = tlist<Args...>;///< The typelist of arguments
     };
 
+    /**
+     * \brief Meta-function to check if a type is a function-like callback
+     *
+     * Returns true if the dissector is able to meaningfully dissect it, and
+     * get the arguments. False otherwise.
+     *
+     * \tparam T The type to check
+     */
     template<class T>
     INFO_CLI_LOCAL constexpr const static auto is_typed_callback = dissector<T, void>::value;
 
+    /**
+     * \brief Meta-function to perform the dissection as defined by dissector
+     *
+     * Takes a type and properly dispatches it to the dissector class which
+     * allows it to return the arguments a function-like type takes, as defined
+     * for the dissector class.
+     *
+     * \return The typelist of the types arguments
+     */
     template<class T>
     using dissect = typename dissector<T, void>::type;
 }

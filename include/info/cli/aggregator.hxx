@@ -1,4 +1,4 @@
-//// BSD 3-Clause License
+// BSD 3-Clause License
 //
 // Copyright (c) 2020, bodand
 // All rights reserved.
@@ -38,19 +38,54 @@
 #include <type_traits>
 #include <vector>
 
-#include <info/cli/macros.hxx>
 #include <info/cli/extra/repeat.hxx>
+#include <info/cli/macros.hxx>
 
 namespace info::_cli {
+    /**
+     * \brief Aggregates aggregating types
+     *
+     * When given an aggregating type, the \c value member resolves to true
+     * and the \c operator() member function is defined, otherwise \c value
+     * contains false.
+     *
+     * In either case, the \c type member typedef contains the type that's going
+     * to get aggregated, or the given type if type is not aggregating.
+     *
+     * \tparam T The type to aggregate on
+     */
     template<class T>
     struct INFO_CLI_API aggregator_ : std::false_type {
-        using type = T;
+        using type = T;///< The type aggregated on
     };
 
+    /**
+     * \copybrief aggregator_
+     *
+     * Defines the way to properly handle a type with a repeat type modifier:
+     * if it is an integral type, increment it by the value found, otherwise
+     * recursively call the aggregator for the parameter type of the type
+     * modifier.
+     *
+     * \tparam T The modified type
+     */
     template<class T>
     struct INFO_CLI_API aggregator_<cli::repeat<T>> : std::true_type {
-        using type = T;
+        using type = T;///< The modified type
 
+        /**
+         * \brief Performs aggregation on a modified type's extracted lvalue reference
+         *
+         * Takes an lvalue reference to the type wrapped by the type modifier
+         * which is then aggregated on.
+         *
+         * \tparam U The type of the value to be aggregated into the lvalue reference
+         *
+         * \param rep The lvalue reference to the wrapped type to modify
+         * \param elem The forwarding reference to aggregate into \c rep
+         *
+         * \return void (auto)
+         */
         template<class U>
         auto /* !! CAUTION !! \
                this function contrary to all other aggregator_<T> types does NOT
@@ -72,10 +107,31 @@ namespace info::_cli {
         }
     };
 
+    /**
+     * \copybrief aggregator_
+     *
+     * Aggregator that aggregates vectors of type T.
+     * Vectors are aggregated using their emplace_back member functions.
+     *
+     * \tparam T The contained type of the vector
+     */
     template<class T>
     struct INFO_CLI_API aggregator_<std::vector<T>> : std::true_type {
-        using type = T;
+        using type = T;///< The contained type
 
+        /**
+         * \brief Aggregates the given vector
+         *
+         * Aggregates a new element into the vector by emplacing the forwarded
+         * element at the end.
+         *
+         * \tparam U Type of the element to be added
+         *
+         * \param cont The vector to add into
+         * \param elem The elem to be moved into the vector
+         *
+         * \return void (auto)
+         */
         template<class U>
         auto
         operator()(std::vector<T>& cont, U&& elem) const {
@@ -85,10 +141,31 @@ namespace info::_cli {
         }
     };
 
+    /**
+     * \copybrief aggregator_
+     *
+     * Aggregator that aggregates lists of type T.
+     * Lists are aggregated using their emplace_back member functions.
+     *
+     * \tparam T The contained type of the list
+     */
     template<class T>
     struct INFO_CLI_API aggregator_<std::list<T>> : std::true_type {
-        using type = T;
+        using type = T;///< The contained type
 
+        /**
+         * \brief Aggregates the given list
+         *
+         * Aggregates a new element into the list by emplacing the forwarded
+         * element at the end.
+         *
+         * \tparam U Type of the element to be added
+         *
+         * \param cont The list to add into
+         * \param elem The elem to be moved into the list
+         *
+         * \return void (auto)
+         */
         template<class U>
         auto
         operator()(std::list<T>& cont, U&& elem) const {
@@ -98,10 +175,32 @@ namespace info::_cli {
         }
     };
 
+    /**
+     * \copybrief aggregator_
+     *
+     * Aggregator that aggregates stacks of type T.
+     * Stacks are aggregated using their emplace member functions and
+     * new elements will be pushed onto the stack.
+     *
+     * \tparam T The contained type of the stack
+     */
     template<class T>
     struct INFO_CLI_API aggregator_<std::stack<T>> : std::true_type {
-        using type = T;
+        using type = T;///< The contained type
 
+        /**
+         * \brief Aggregates the given stack
+         *
+         * Aggregates a new element into the stack by emplacing the forwarded
+         * element.
+         *
+         * \tparam U Type of the element to be added
+         *
+         * \param cont The stack to push onto
+         * \param elem The elem to be moved onto the stack
+         *
+         * \return void (auto)
+         */
         template<class U>
         auto
         operator()(std::stack<T>& cont, U&& elem) const {
@@ -111,10 +210,32 @@ namespace info::_cli {
         }
     };
 
+    /**
+     * \copybrief aggregator_
+     *
+     * Aggregator that aggregates queues of type T.
+     * Queues are aggregated using their emplace member functions,
+     * when new elements are added to the queue.
+     *
+     * \tparam T The contained type of the queue
+     */
     template<class T>
     struct INFO_CLI_API aggregator_<std::queue<T>> : std::true_type {
-        using type = T;
+        using type = T;///< The contained type
 
+        /**
+         * \brief Aggregates the given queue
+         *
+         * Aggregates a new element into the queue by emplacing the forwarded
+         * element at the end.
+         *
+         * \tparam U Type of the element to be added
+         *
+         * \param cont The queue to add into
+         * \param elem The elem to be moved into the queue
+         *
+         * \return void (auto)
+         */
         template<class U>
         auto
         operator()(std::queue<T>& cont, U&& elem) const {
@@ -124,10 +245,32 @@ namespace info::_cli {
         }
     };
 
+    /**
+     * \copybrief aggregator_
+     *
+     * Aggregator that aggregates deques of type T.
+     * Deques are aggregated using their emplace_back member functions, thus
+     * they behave as if they were a simple queue in the hands of InfoCLI.
+     *
+     * \tparam T The contained type of the deque
+     */
     template<class T>
     struct INFO_CLI_API aggregator_<std::deque<T>> : std::true_type {
-        using type = T;
+        using type = T;///< The contained type
 
+        /**
+         * \brief Aggregates the given deque
+         *
+         * Aggregates a new element into the deque by emplacing the forwarded
+         * element at the end.
+         *
+         * \tparam U Type of the element to be added
+         *
+         * \param cont The deque to add into
+         * \param elem The elem to be moved into the deque
+         *
+         * \return void (auto)
+         */
         template<class U>
         auto
         operator()(std::deque<T>& cont, U&& elem) const {
@@ -137,9 +280,25 @@ namespace info::_cli {
         }
     };
 
+    /**
+     * \brief Instance of an aggregator for type \c T
+     *
+     * \tparam T The type to perform the aggregating functions on
+     */
     template<class T>
     INFO_CLI_LOCAL constexpr static auto aggregator = aggregator_<T>{};
 
+    /**
+     * \brief Meta-function to get the type the aggregator type is aggregating on
+     *
+     * Returns the type on which the aggregating type \c T aggregates, or if the
+     * given type is not aggregating it returns the given type.
+     *
+     * \tparam T The type to inspect
+     *
+     * \return The type on which the aggregating type aggregates, or the
+     *          type itself
+     */
     template<class T>
     using aggregator_type = typename aggregator_<T>::type;
 }

@@ -83,3 +83,18 @@ no other libraries are required.
 
 After configuring the `cli-bench-${option type}-${numer of options parsed}` targets 
 can be used to run the benchmarks. For the available targets, see the output of CMake.
+
+## Licenses
+
+The InfoCLI project is available under the BSD 3-Clause license. For more 
+information see the provided `LICENSE` file.
+
+InfoCLI uses the following libraries as dependencies under the listed licenses:
+ - `InfoUtils`: BSD 3-Clause (`LICENSE`)
+ - `{fmt}`    : The fmtlib license (`LICENSE.fmtlib`)
+ - `Catch2`   : Boost Software License v1.0 (`LICENSE.bsl`)
+
+The documentation uses Doxygen. For the generated HTML documentation, a dark
+theme is used from https://github.com/MaJerle/doxygen-dark-theme. It is available
+under the MIT License: see `LICENSE.doxygen-dark-theme`. The actual theme
+is modified to make the `note` paragraphs look like they do now.

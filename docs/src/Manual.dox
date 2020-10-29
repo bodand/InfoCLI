@@ -1,0 +1,66 @@
+/**
+ * \mainpage Welcome to the InfoCLI Manual!
+ *
+ * # InfoCLI
+ *
+ * InfoCLI is a pretty fast command line argument parser. It provides an
+ * easy to use DSL to configure your command line interface, which means goodbye
+ * to that enormous switch case that's uglifying your codebase. You can instead
+ * have operator overloading madness, which'll confuse everyone who haven't read
+ * this manual. Life's shit either way, so I'd rather go with madness. At least
+ * that's artistic.
+ *
+ * ### C++ CLI libraries
+ *
+ * But really: the library provides similar capabilities that
+ * [Boost.Program_options](https://www.boost.org/doc/libs/1_74_0/doc/html/program_options.html)
+ * and [cxxopts](https://github.com/jarro2783/cxxopts) provide, but at least
+ * 2x faster (probably more, but that's for almost sure (please tell me
+ * if you figure otherwise)) than the latter, and let's not talk about the former's
+ * speed: it's literally like a snail. If you do not want to use InfoCLI, sure,
+ * but don't use Boost.Program_options. Write your own. It'll be faster.
+ *
+ * ### The getopt couple
+ *
+ * But I hear you ask: Why don't I just use \c getopt or \c getopt_long. If you
+ * claim that you are faster than those I'm filing a report for scamming!
+ *
+ * Well that's true. Nobody even nears the speeds the `getopt`s achieve, but that's
+ * not the only thing I have up my sleeve: looks. Not mine, natch, the code's.
+ * While the `getopt`s are beating world records for option parsing, they end
+ * up with one problem, two, actually, but the second is rather trivial.
+ * The code will end up getting overrun by one big[-](https://xkcd.com/37/)ass
+ * switch that's used for option handling. The second is that \c getopt_long
+ * is not even POSIX, and even \c getopt is nonexistent on Windows, because why
+ * help the dear developers. They can suffer freely.
+ *
+ * The second one is easy to fix, it's not that hard to fetch a quick \c getopt
+ * or \c getopt_long implementation from one of the BSDs and have it easily integrate
+ * into any project that does not want to be infected. The first one is where
+ * InfoCLI overtakes the `getopt`s is that now with InfoCLI that switch
+ * is a similarly large DSL thingy, which while still gigantic, does not
+ * look that bad, since the options and the callbacks are closer that with
+ * \c getopt_long, for example. Of course, for a small utility program for the
+ * nixes, \c getopt will probably suffice, but I really don't want to manage
+ * the amount of options in like GCC with \c getopt_long like they are I'd guess
+ * are doing. /shurg
+ *
+ * ## Get started
+ *
+ * To get started just head over to the \ref Installation page, which describes
+ * the methods you can use to get your hands on InfoCLI.
+ *
+ * If you've done that, the best thing to read is the tutorial series, which
+ * teaches you how to use the library: \ref Tutorial_0. When you'll have finished
+ * reading and trying out the examples, you'll have learned everything there
+ * is to know about the usage of the library. Be scared not! It's only 5 chapters,
+ * most of which is just code: command line parsing is rather simple thing, even
+ * though I tried my hardest to overcomplicate it, but that's just behind the
+ * scenes.
+ *
+ * ## Reference manual
+ *
+ * If you ever need to look something up, the doxygen documentation you are reading
+ * right now (it is doxygen, unbelievable isn't it?) should contain every documentation
+ * the code's ever had.
+ */

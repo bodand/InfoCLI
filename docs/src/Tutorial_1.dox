@@ -1,0 +1,101 @@
+/**
+ * \defgroup Tutorial_1 The InfoCLI tutorial/1
+ *
+ * # Tutorial 1 - Auto-Help
+ *
+ * Now that you know the basics of the library, the second thing that's important
+ * is the ability to create a help command for "h" / "help" automatically, before
+ * jumping into the more complex ideas like aggregating types and the library's
+ * parsing behavior and how to influence it.
+ *
+ * First, let's talk about how the help works. It takes all the defined help
+ * texts for the options, and when called with \c h or \c help, it prints out
+ * everything. This is quite self-explanatory, the more interesting thing is the
+ * conditions for Auto-Help to kick-in:
+ *  - You must define at least one description for an option. If you do not
+ *    define any message descriptions, the Auto-Help will just ignore everything.
+ *    For options that do not have a description, only themselves are printed
+ *    without a description. This behavior may change in the next minor release. (Beryllium)
+ *  - You must not define an option with the name \c "help" yourself. If you do
+ *    Auto-Help will assume you wish to do the help message manually, and therefore
+ *    will not do anything. This does not apply to the name \c "h", which is just
+ *    not aliased for the help command if already present.
+ * If those conditions are met, Auto-Help will generate the help message for
+ * you, without having to write one bit of formatting or callback code. Quite fancy.
+ *
+ * Now let's modify the previous tutorial's code to get us to generate a help
+ * command.
+ */
+
+#include <iostream>
+#include <iterator>
+#include <string>
+
+#include <info/cli.hxx>
+namespace ic = info::cli;
+using namespace ic::udl;
+
+// always false ˇ just used to ignore the main fn in the docs
+/// \cond TUTORIAL_MAIN
+int
+main(int argc, char** argv) {
+    /// \endcond
+
+    bool force = false;
+    std::string msg;
+
+    /// \addtogroup Tutorial_1
+    ///
+    /// The thing we need to modify is the option definitions: betwixt the names
+    /// for the option and the callback, we need to just specify the text for
+    /// command's description. The way this is done, is by adding a greater-or-equal
+    /// operator after the names of the option and then adding the descriptions
+    /// string before the right-shift-and-set operator.
+    ///
+    /// If we were to modify the last example's code this is how it'd look like:
+    /// \code
+    ic::cli_parser cli{
+           "force"_opt
+                  >= "Whether to force the operation."
+                     "" >>= force,
+           'm' / "message"_opt
+                  >= "A message to send to the recipient with the default payload"
+                     "" >>= msg};
+    /// \endcode
+    ///
+    /// Natch, you don't have to format it like that, but for longer descriptions
+    /// it may be worth it. (Yes, the empty strings are there to satisfy clang-format.)
+    ///
+    /// The remaining of the code remains the same, repeated here for convenience:
+    ///
+    /// \code
+    std::vector<std::string_view> rem;
+    try {
+        rem = cli(argc, argv);
+    } catch (const std::exception& ex) {
+        std::cerr << ex.what() << '\n';
+        return -1;
+    }
+    /// \endcode
+    ///
+    /// And the business logic still remains the same, but, of course, we have
+    /// an optional path execution may take: help is encountered and it bails
+    /// the whole program, before the business logic is reached.
+    ///
+    /// \code
+    std::cout << std::boolalpha
+              << "Force enabled: " << force
+              << "\nMessage: " << msg
+              << "\nLeft-back operands: ";
+    std::ostream_iterator<std::string_view> out(std::cout, " ");
+    std::copy(rem.begin(), rem.end(), out);
+    /// \endcode
+    ///
+    /// If you want to try out this project, compile the `cli-tut1` target.
+    /// It's worth checking out how \c \-\-help works, so I recommend trying it.
+    ///
+    /// Now as we are done with the pleasantries, we can jump into function callbacks,
+    /// in the next tutorial which allows you to do literally anything for a
+    /// specific option's behavior: \ref Tutorial_2
+    ///
+}
