@@ -139,6 +139,13 @@ namespace info::cli {
          */
         std::vector<std::string_view> operator()(int argc, char** argv);
         /**
+         * Adds a custom message to the usage text in the Auto-help.
+         *
+         * \param usage_msg The usage message to add to the auto-generated help
+         * \return This cli_parser object
+         */
+        cli_parser& operator[](std::string_view usage_msg);
+        /**
          * \brief Returns the number of options
          *
          * Returns the number of options and aliases registered into the cli_parser
@@ -177,6 +184,8 @@ namespace info::cli {
         std::vector<callback_type> _callbacks;
         options_type _options;
         std::unordered_set<help_type> _helps;
+        std::string _exec;
+        std::string _usage_msg;
 
         /// The function to handle encountering a short option (packed or not)
         void short_option(char* arg, int argc, char** argv, int& i);

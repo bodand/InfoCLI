@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <string>
 #include <string_view>
 
@@ -63,6 +64,9 @@ info::cli::cli_parser::short_option(char* arg, int argc, char** argv, int& i) {
 
 std::vector<std::string_view>
 info::cli::cli_parser::operator()(int argc, char** argv) {
+    std::filesystem::path argv0(argv[0]);
+    _exec = argv0.filename().string();
+
     std::vector<std::string_view> operands;
     operands.reserve(static_cast<unsigned>(argc));
 
@@ -129,7 +133,27 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
     }
     if (!_helps.empty()
         && _options.find("help") == _options.end()) {
-        _callbacks.emplace_back([&](std::string_view, const char*&) -> bool {
+        _callbacks.emplace_back([&, this](std::string_view, const char*&) -> bool {
+            bool has_long = false;
+            std::string aggregated_opts;
+            for (auto& [name, _opt] : _options) {
+                if (name.size() == 1) {
+                    aggregated_opts += name;
+                } else {
+                    has_long = true;
+                }
+            }
+            if (!aggregated_opts.empty()) {
+                aggregated_opts = fmt::format(" [-{}]", aggregated_opts);
+            }
+            if (has_long) {
+                aggregated_opts = fmt::format(" [LONG_OPTIONS]");
+            }
+
+            fmt::print("USAGE: {}{}\n\n",
+                       _exec,
+                       aggregated_opts);
+
             for (const auto& [msg, calls] : _helps) {
                 fmt::print("\t{}\n", format_opts(calls));
 
@@ -275,4 +299,11 @@ info::cli::cli_parser::long_option(int argc, char** argv, int& i) {
     } else if (INFO_CLI_UNLIKELY(!fn(data.default_val, last))) {// last ignored
         throw callback_error(argv[i], data.default_val.data());
     }
+}
+
+info::cli::cli_parser&
+info::cli::cli_parser::operator[](std::string_view usage_msg) {
+    _usage_msg = " ";
+    _usage_msg += usage_msg;
+    return *this;
 }
