@@ -143,11 +143,12 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
                     has_long = true;
                 }
             }
+            std::sort(aggregated_opts.begin(), aggregated_opts.end());
             if (!aggregated_opts.empty()) {
                 aggregated_opts = fmt::format(" [-{}] ", aggregated_opts);
             }
             if (has_long) {
-                aggregated_opts = fmt::format("{} [LONG_OPTIONS] ", aggregated_opts);
+                aggregated_opts = fmt::format("{}[LONG_OPTIONS]", aggregated_opts);
             }
 
             fmt::print("USAGE: {}{}{}\n\n",
@@ -155,6 +156,7 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
                        aggregated_opts,
                        _usage_msg);
 
+            fmt::print("Options:\n");
             for (const auto& [msg, calls] : _helps) {
                 fmt::print("\t{}\n", format_opts(calls));
 
