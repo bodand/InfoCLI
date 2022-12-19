@@ -144,15 +144,16 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
                 }
             }
             if (!aggregated_opts.empty()) {
-                aggregated_opts = fmt::format(" [-{}]", aggregated_opts);
+                aggregated_opts = fmt::format(" [-{}] ", aggregated_opts);
             }
             if (has_long) {
-                aggregated_opts = fmt::format(" [LONG_OPTIONS]");
+                aggregated_opts = fmt::format("{} [LONG_OPTIONS] ", aggregated_opts);
             }
 
-            fmt::print("USAGE: {}{}\n\n",
+            fmt::print("USAGE: {}{}{}\n\n",
                        _exec,
-                       aggregated_opts);
+                       aggregated_opts,
+                       _usage_msg);
 
             for (const auto& [msg, calls] : _helps) {
                 fmt::print("\t{}\n", format_opts(calls));
