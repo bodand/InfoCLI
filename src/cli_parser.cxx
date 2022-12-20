@@ -54,12 +54,16 @@ format_opts(const std::vector<std::pair<std::string_view, T*>>& opts) {
 }
 
 void
-info::cli::cli_parser::short_option(char* arg, int argc, char** argv, int& i) {
+info::cli::cli_parser::short_option(std::vector<std::string_view>& ops,
+                                    char* arg,
+                                    int argc,
+                                    char** argv,
+                                    int& i) {
     if (arg[0] != '\0'
         && arg[1] == '\0') {// short unpacked option 'x' (option stripped)
-        return unpacked_shorts(arg, argc, argv, i);
+        return unpacked_shorts(ops, arg, argc, argv, i);
     }
-    packed_shorts(arg, argc, argv, i);
+    packed_shorts(ops, arg, argc, argv, i);
 }
 
 std::vector<std::string_view>
@@ -80,7 +84,7 @@ info::cli::cli_parser::operator()(int argc, char** argv) {
                 }
                 return operands;
             }
-            long_option(argc, argv, i);
+            long_option(operands, argc, argv, i);
             continue;
         }
 
@@ -90,7 +94,7 @@ info::cli::cli_parser::operator()(int argc, char** argv) {
             if (argv[i][1] == '\0') {// "-"
                 operands.emplace_back("-");
             } else {
-                short_option(strip_option(argv[i]), argc, argv, i);
+                short_option(operands, strip_option(argv[i]), argc, argv, i);
             }
             continue;
         }
@@ -102,16 +106,29 @@ info::cli::cli_parser::operator()(int argc, char** argv) {
     return operands;
 }
 
+namespace {
+    template<class C>
+    C*
+    strip_generic(C* opt, bool lng) {
+        auto ret = opt;
+
+        ret += *ret == '-';
+        if (lng) {
+            ret += *ret == '-';
+        }
+
+        return ret;
+    }
+}
+
 char*
 info::cli::cli_parser::strip_option(char* opt, bool lng) {
-    char* ret = opt;
+    return strip_generic(opt, lng);
+}
 
-    ret += *ret == '-';
-    if (lng) {
-        ret += *ret == '-';
-    }
-
-    return ret;
+const char*
+info::cli::cli_parser::strip_option(const char* opt, bool lng) {
+    return strip_generic(opt, lng);
 }
 
 info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
@@ -181,13 +198,18 @@ info::cli::cli_parser::size() const noexcept {
 }
 
 void
-info::cli::cli_parser::unpacked_shorts(char* arg, int argc, char** argv, int& i) {
+info::cli::cli_parser::unpacked_shorts(std::vector<std::string_view>& ops,
+                                       char* arg,
+                                       int argc,
+                                       char** argv,
+                                       int& i) {
     const char* last = nullptr;
     std::string_view inopt{arg};
 
     auto it = _options.find({inopt.data(), inopt.size()});
     if (it == _options.end()) {
-        throw no_such_option(arg);
+        invalid_option(ops, fmt::format("-{}", arg), argv[i]);
+        return;
     }
 
     auto& [data, idx] = it->second;
@@ -212,13 +234,19 @@ info::cli::cli_parser::unpacked_shorts(char* arg, int argc, char** argv, int& i)
 }
 
 void
-info::cli::cli_parser::packed_shorts(char* arg, int argc, char** argv, int& i) {
+info::cli::cli_parser::packed_shorts(std::vector<std::string_view>& ops,
+                                     char* arg,
+                                     int argc,
+                                     char** argv,
+                                     int& i) {
     const char* last = nullptr;
     std::string_view inopt(arg);
 
-    auto it = _options.find(std::string(1, inopt[0]));
+    auto zeroth_opt = std::string(1, inopt[0]);
+    auto it = _options.find(zeroth_opt);
     if (it == _options.end()) {
-        throw no_such_option(arg);
+        invalid_option(ops, fmt::format("-{}", zeroth_opt), argv[i]);
+        return;
     }
     auto& [data, idx] = it->second;
     auto& fn = _callbacks[idx];
@@ -233,7 +261,7 @@ info::cli::cli_parser::packed_shorts(char* arg, int argc, char** argv, int& i) {
             throw callback_error(std::string(arg, 1), inopt.substr(1).data());
         }
 
-        short_option(arg + 1, argc, argv, i);
+        short_option(ops, arg + 1, argc, argv, i);
     } else if (parse_type_accepts(data.expected_type)(inopt[1])) {
         // munch from input
         if (!fn(inopt.substr(1, static_cast<std::size_t>(data.length)), last)) {
@@ -244,7 +272,7 @@ info::cli::cli_parser::packed_shorts(char* arg, int argc, char** argv, int& i) {
             return;
         }
 
-        short_option(const_cast<char*>(last), argc, argv, i);
+        short_option(ops, const_cast<char*>(last), argc, argv, i);
     } else if (data.allow_nothing) {
         if (INFO_CLI_UNLIKELY(!fn(data.default_val, last))) {// last ignored
             throw callback_error(std::string(arg, 1), data.default_val.data());
@@ -255,7 +283,7 @@ info::cli::cli_parser::packed_shorts(char* arg, int argc, char** argv, int& i) {
 }
 
 void
-info::cli::cli_parser::long_option(int argc, char** argv, int& i) {
+info::cli::cli_parser::long_option(std::vector<std::string_view>& ops, int argc, char** argv, int& i) {
     std::string_view inopt{strip_option(argv[i], true)};
     const char* last = nullptr;
 
@@ -267,7 +295,8 @@ info::cli::cli_parser::long_option(int argc, char** argv, int& i) {
 
         auto it = _options.find(std::string(opt.data(), opt.size()));
         if (it == _options.end()) {
-            throw no_such_option(strip_option(const_cast<char*>(opt.data()), true));
+            invalid_option(ops, argv[i], argv[i]);
+            return;
         }
         auto& [_, idx] = it->second;
         auto& fn = _callbacks[idx];
@@ -281,7 +310,8 @@ info::cli::cli_parser::long_option(int argc, char** argv, int& i) {
 
     auto it = _options.find(std::string(inopt.data(), inopt.size()));
     if (it == _options.end()) {
-        throw no_such_option(strip_option(const_cast<char*>(inopt.data()), true));
+        invalid_option(ops, argv[i], argv[i]);
+        return;
     }
     auto& [data, idx] = it->second;
     auto& fn = _callbacks[idx];
@@ -309,4 +339,23 @@ info::cli::cli_parser::operator[](std::string_view usage_msg) {
     _usage_msg = " ";
     _usage_msg += usage_msg;
     return *this;
+}
+
+void
+info::cli::cli_parser::invalid_option(std::vector<std::string_view>& ops,
+                                      const std::string& opt,
+                                      char* arg) {
+    switch (_unk_behavior) {
+    case unknown_behavior::throw_with_leading:
+        throw no_such_option(opt.substr(0, opt.find('=')));
+    case unknown_behavior::classic:
+        if (arg != nullptr && opt.size() == 2 && opt[0] == '-') {
+            throw no_such_option(strip_option(arg, true));
+        }
+        throw no_such_option(strip_option(opt.c_str(), true));
+    case unknown_behavior::pass_back:
+        ops.emplace_back(arg);
+        return;
+    }
+    INFO_CLI_NOT_HAPPENING;
 }

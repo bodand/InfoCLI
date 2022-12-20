@@ -97,6 +97,16 @@ namespace std {
 
 namespace info::cli {
     /**
+     * An enumeration showing how an invalid option can be handled.
+     * Each enumerator represents a way of dealing with an invalid option.
+     */
+    enum class unknown_behavior {
+        classic, ///< The default behavior; strip leading dashes and throw no_such_option
+        throw_with_leading, ///< throw no_such_option without stripping
+        pass_back ///< Put unknown option into the operands set as-is
+    };
+
+    /**
      * \brief Handles the parsing of command line arguments and calling of callbacks
      *
      * The main entity of InfoCLI. It owns the complete registry of known options
@@ -155,6 +165,19 @@ namespace info::cli {
         [[nodiscard]] INFO_CLI_PURE std::size_t size() const noexcept;
 
         /**
+         * Sets behavior when encountering unknown options.
+         *
+         * Sets the what happens if an option which was not registered is encountered.
+         * Unless changed, the behavior of a cli_parser is \c classic.
+         *
+         * \param behavior The new behavior
+         */
+        void
+        unknown_behavior(unknown_behavior behavior) {
+            _unk_behavior = behavior;
+        }
+
+        /**
          * \brief Create the cli_parser with the given options
          *
          * Registers the set of options which will be understood by this cli_parser
@@ -186,15 +209,16 @@ namespace info::cli {
         std::unordered_set<help_type> _helps;
         std::string _exec;
         std::string _usage_msg;
+        enum unknown_behavior _unk_behavior = unknown_behavior::classic;
 
         /// The function to handle encountering a short option (packed or not)
-        void short_option(char* arg, int argc, char** argv, int& i);
+        void short_option(std::vector<std::string_view>& ops, char* arg, int argc, char** argv, int& i);
         /// The function handling singular, not packed short options
-        void unpacked_shorts(char* arg, int argc, char** argv, int& i);
+        void unpacked_shorts(std::vector<std::string_view>& ops, char* arg, int argc, char** argv, int& i);
         /// The function handling packed options
-        void packed_shorts(char* arg, int argc, char** argv, int& i);
+        void packed_shorts(std::vector<std::string_view>& ops, char* arg, int argc, char** argv, int& i);
         /// Handles long options, GNU-style or not
-        void long_option(int argc, char** argv, int& i);
+        void long_option(std::vector<std::string_view>& ops, int argc, char** argv, int& i);
 
         /**
          * Strips the beginning dash (or two dashes) from an option argument.
@@ -206,6 +230,21 @@ namespace info::cli {
          * \return A C-string pointing at the non-dash character of the original C-string
          */
         [[nodiscard]] INFO_CLI_PURE static char* strip_option(char* opt, bool lng = false);
+        /**
+         * \copydoc strip_option
+         */
+        [[nodiscard]] INFO_CLI_PURE static const char* strip_option(const char* opt, bool lng = false);
+
+        /**
+         * Handle receiving an invalid option
+         *
+         * Handles the invalid option based on the currently set unkown_behavior.
+         *
+         * \param ops The set of operands in the current parsing operation
+         * \param opt The option which could not be matched to the known options
+         */
+        void
+        invalid_option(std::vector<std::string_view>& ops, const std::string& opt, char* arg);
     };
 
 }

@@ -259,3 +259,76 @@ TEST_CASE("cli_parser throws if option is not defined",
                                                                "line: 'tree=arbor'"));
     }
 }
+
+TEST_CASE("cli_parser throws in new format if option is not defined and throw_with_leading is set",
+          "[cli_parser][error][no_such_option]") {
+    info::cli::cli_parser cli{};
+    cli.unknown_behavior(info::cli::unknown_behavior::throw_with_leading);
+
+    SECTION("unpacked options") {
+        auto args = std::array{"-i"};
+        CHECK_THROWS_MATCHES(cli(args.size(), const_cast<char**>(args.data())),
+                             info::cli::no_such_option,
+                             EXCEPTION_MESSAGE_MATCHES_STRINGS(info::cli::no_such_option,
+                                                               "error: unknown option",
+                                                               "line: '-i'"));
+    }
+
+    SECTION("packed options") {
+        auto args = std::array{"-icup"};
+        CHECK_THROWS_MATCHES(cli(args.size(), const_cast<char**>(args.data())),
+                             info::cli::no_such_option,
+                             EXCEPTION_MESSAGE_MATCHES_STRINGS(info::cli::no_such_option,
+                                                               "error: unknown option",
+                                                               "line: '-i'"));
+    }
+
+    SECTION("long options") {
+        auto args = std::array{"--methamphetamine"};
+        CHECK_THROWS_MATCHES(cli(args.size(), const_cast<char**>(args.data())),
+                             info::cli::no_such_option,
+                             EXCEPTION_MESSAGE_MATCHES_STRINGS(info::cli::no_such_option,
+                                                               "error: unknown option",
+                                                               "line: '--methamphetamine'"));
+    }
+
+    SECTION("GNU-style long options") {
+        auto args = std::array{"--tree=arbor"};
+        CHECK_THROWS_MATCHES(cli(args.size(), const_cast<char**>(args.data())),
+                             info::cli::no_such_option,
+                             EXCEPTION_MESSAGE_MATCHES_STRINGS(info::cli::no_such_option,
+                                                               "error: unknown option",
+                                                               "line: '--tree'"));
+    }
+}
+
+TEST_CASE("cli_parser returns it if option is not defined and pass_back is set",
+          "[cli_parser][error][no_such_option]") {
+    info::cli::cli_parser cli{};
+    cli.unknown_behavior(info::cli::unknown_behavior::pass_back);
+
+    SECTION("unpacked options") {
+        auto args = std::array{"-i"};
+        auto rem = cli(args.size(), const_cast<char**>(args.data()));
+        CHECK_THAT(rem, Catch::Equals(std::vector{"-i"sv}));
+    }
+
+    SECTION("packed options") {
+        auto args = std::array{"-icup"};
+        auto rem = cli(args.size(), const_cast<char**>(args.data()));
+        CHECK_THAT(rem, Catch::Equals(std::vector{"-icup"sv}));
+
+    }
+
+    SECTION("long options") {
+        auto args = std::array{"--methamphetamine"};
+        auto rem = cli(args.size(), const_cast<char**>(args.data()));
+        CHECK_THAT(rem, Catch::Equals(std::vector{"--methamphetamine"sv}));
+    }
+
+    SECTION("GNU-style long options") {
+        auto args = std::array{"--tree=arbor"};
+        auto rem = cli(args.size(), const_cast<char**>(args.data()));
+        CHECK_THAT(rem, Catch::Equals(std::vector{"--tree=arbor"sv}));
+    }
+}
