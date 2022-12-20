@@ -160,7 +160,12 @@ info::cli::cli_parser::cli_parser(std::initializer_list<option> opts) {
                     has_long = true;
                 }
             }
-            std::sort(aggregated_opts.begin(), aggregated_opts.end());
+            std::sort(aggregated_opts.begin(), aggregated_opts.end(), [](char a, char b) {
+                if (std::tolower(a) == std::tolower(b)) {
+                    return std::isupper(a) != 0;
+                }
+                return std::tolower(a) < std::tolower(b);
+            });
             if (!aggregated_opts.empty()) {
                 aggregated_opts = fmt::format(" [-{}] ", aggregated_opts);
             }
