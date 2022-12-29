@@ -56,9 +56,9 @@ format_opts(const std::vector<std::pair<std::string_view, T*>>& opts) {
 void
 info::cli::cli_parser::short_option(std::vector<std::string_view>& ops,
                                     char* arg,
-                                    int argc,
+                                    size_t argc,
                                     char** argv,
-                                    int& i) {
+                                    size_t& i) {
     if (arg[0] != '\0'
         && arg[1] == '\0') {// short unpacked option 'x' (option stripped)
         return unpacked_shorts(ops, arg, argc, argv, i);
@@ -68,18 +68,23 @@ info::cli::cli_parser::short_option(std::vector<std::string_view>& ops,
 
 std::vector<std::string_view>
 info::cli::cli_parser::operator()(int argc, char** argv) {
+    return (*this)(static_cast<std::size_t>(argc), argv);
+}
+
+std::vector<std::string_view>
+info::cli::cli_parser::operator()(std::size_t argc, char** argv) {
     std::filesystem::path argv0(argv[0]);
     _exec = argv0.filename().string();
 
     std::vector<std::string_view> operands;
     operands.reserve(static_cast<unsigned>(argc));
 
-    for (int i = 0; i != argc; ++i) {
+    for (std::size_t i = 0; i != argc; ++i) {
         // handle long options "--"
         bool long_opt = std::memcmp("--", argv[i], sizeof("--") - 1) == 0;
         if (long_opt) {
             if (argv[i][2] == '\0') {// "--"
-                for (int j = i + 1; j != argc; ++j) {
+                for (std::size_t j = i + 1; j != argc; ++j) {
                     operands.emplace_back(argv[j]);
                 }
                 return operands;
@@ -205,9 +210,9 @@ info::cli::cli_parser::size() const noexcept {
 void
 info::cli::cli_parser::unpacked_shorts(std::vector<std::string_view>& ops,
                                        char* arg,
-                                       int argc,
+                                       size_t argc,
                                        char** argv,
-                                       int& i) {
+                                       size_t& i) {
     const char* last = nullptr;
     std::string_view inopt{arg};
 
@@ -241,9 +246,9 @@ info::cli::cli_parser::unpacked_shorts(std::vector<std::string_view>& ops,
 void
 info::cli::cli_parser::packed_shorts(std::vector<std::string_view>& ops,
                                      char* arg,
-                                     int argc,
+                                     size_t argc,
                                      char** argv,
-                                     int& i) {
+                                     size_t& i) {
     const char* last = nullptr;
     std::string_view inopt(arg);
 
@@ -288,7 +293,7 @@ info::cli::cli_parser::packed_shorts(std::vector<std::string_view>& ops,
 }
 
 void
-info::cli::cli_parser::long_option(std::vector<std::string_view>& ops, int argc, char** argv, int& i) {
+info::cli::cli_parser::long_option(std::vector<std::string_view>& ops, size_t argc, char** argv, size_t& i) {
     std::string_view inopt{strip_option(argv[i], true)};
     const char* last = nullptr;
 

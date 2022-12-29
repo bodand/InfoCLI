@@ -149,6 +149,10 @@ namespace info::cli {
          */
         std::vector<std::string_view> operator()(int argc, char** argv);
         /**
+         * \copydoc operator()
+         */
+        std::vector<std::string_view> operator()(std::size_t argc, char** argv);
+        /**
          * Adds a custom message to the usage text in the Auto-help.
          *
          * \param usage_msg The usage message to add to the auto-generated help
@@ -212,13 +216,13 @@ namespace info::cli {
         enum unknown_behavior _unk_behavior = unknown_behavior::classic;
 
         /// The function to handle encountering a short option (packed or not)
-        void short_option(std::vector<std::string_view>& ops, char* arg, int argc, char** argv, int& i);
+        void short_option(std::vector<std::string_view>& ops, char* arg, size_t argc, char** argv, size_t& i);
         /// The function handling singular, not packed short options
-        void unpacked_shorts(std::vector<std::string_view>& ops, char* arg, int argc, char** argv, int& i);
+        void unpacked_shorts(std::vector<std::string_view>& ops, char* arg, size_t argc, char** argv, size_t& i);
         /// The function handling packed options
-        void packed_shorts(std::vector<std::string_view>& ops, char* arg, int argc, char** argv, int& i);
+        void packed_shorts(std::vector<std::string_view>& ops, char* arg, size_t argc, char** argv, size_t& i);
         /// Handles long options, GNU-style or not
-        void long_option(std::vector<std::string_view>& ops, int argc, char** argv, int& i);
+        void long_option(std::vector<std::string_view>& ops, size_t argc, char** argv, size_t& i);
 
         /**
          * Strips the beginning dash (or two dashes) from an option argument.
