@@ -68,7 +68,7 @@ GetDependency(InfoUtils
 message(CHECK_PASS "found")
 
 ## Catch2 ##
-if (INFO_CLI_BUILD_TEST)
+if (INFO_CLI_BUILD_TESTS)
     message(CHECK_START "[${PROJECT_NAME}] 'Catch2' (3/${_DEP_COUNT})")
     GetDependency(Catch2
                   REPOSITORY_URL https://github.com/catchorg/Catch2.git
