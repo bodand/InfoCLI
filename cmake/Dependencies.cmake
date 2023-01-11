@@ -43,7 +43,11 @@ list(APPEND CMAKE_MESSAGE_INDENT "  ")
 if (INFO_CLI_BUILD_BENCHMARKS)
     set(_DEP_COUNT 6)
 else ()
-    set(_DEP_COUNT 3)
+    if (INFO_CLI_BUILD_TESTS)
+        set(_DEP_COUNT 3)
+    else ()
+        set(_DEP_COUNT 2)
+    endif ()
 endif ()
 
 ## {fmt} ##
@@ -64,13 +68,15 @@ GetDependency(InfoUtils
 message(CHECK_PASS "found")
 
 ## Catch2 ##
-message(CHECK_START "[${PROJECT_NAME}] 'Catch2' (3/${_DEP_COUNT})")
-GetDependency(Catch2
-              REPOSITORY_URL https://github.com/catchorg/Catch2.git
-              VERSION v2.13.1
-              REMOTE_ONLY
-              )
-message(CHECK_PASS "found")
+if (INFO_CLI_BUILD_TEST)
+    message(CHECK_START "[${PROJECT_NAME}] 'Catch2' (3/${_DEP_COUNT})")
+    GetDependency(Catch2
+                  REPOSITORY_URL https://github.com/catchorg/Catch2.git
+                  VERSION v2.13.1
+                  REMOTE_ONLY
+                  )
+    message(CHECK_PASS "found")
+endif()
 
 # Benchmark dependencies
 if (INFO_CLI_BUILD_BENCHMARKS)
