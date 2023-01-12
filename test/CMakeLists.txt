@@ -29,7 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Catch CMake support ##
-include("${CMAKE_BINARY_DIR}/_deps/catch2-src/contrib/Catch.cmake")
+find_package(Catch2 CONFIG REQUIRED)
+include(Catch)
 
 ## Project ##
 project(InfoCLI_Tests

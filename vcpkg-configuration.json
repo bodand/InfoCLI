@@ -1,0 +1,16 @@
+{
+  "default-registry": {
+    "kind": "builtin",
+    "baseline": "036769f5d6da667391c9240bc7ca56e84cacd5b1"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/bodand/vcpkg-registry",
+      "baseline": "7f173614fcf7508febaa0536996dcd2c7e52dc51\n",
+      "packages": [
+        "info-utils"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,525 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "export-cc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "TRUE"
+      }
+    },
+    {
+      "name": "cmake-release-type",
+      "hidden": true,
+      "inherits": [
+        "export-cc"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        }
+      }
+    },
+    {
+      "name": "cmake-debug-type",
+      "hidden": true,
+      "inherits": [
+        "export-cc"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
+        }
+      }
+    },
+    {
+      "name": "win32-build",
+      "description": "Condition for building on Windows",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "INFO_CLI_SYS_NAME": "windows"
+      }
+    },
+    {
+      "name": "unix-build",
+      "description": "Condition for building on not Windows",
+      "hidden": true,
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-build",
+      "description": "Conditions for building on Linux",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "INFO_CLI_SYS_NAME": "linux"
+      }
+    },
+    {
+      "name": "osx-build",
+      "description": "Conditions for building on OSX",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "INFO_CLI_SYS_NAME": "osx"
+      }
+    },
+    {
+      "name": "fbsd-build",
+      "description": "Conditions for building on FreeBSD",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "FreeBSD"
+      },
+      "cacheVariables": {
+        "INFO_CLI_SYS_NAME": "freebsd"
+      }
+    },
+    {
+      "name": "vcpkg-rel-no-dbg",
+      "description": "Tries to disable building Debug objects for Release builds w/ vcpkg",
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_OVERLAY_TRIPLETS": {
+          "type": "PATH",
+          "value": "${sourceDir}/cmake/triplets"
+        }
+      }
+    },
+    {
+      "name": "local-vcpkg",
+      "description": "Sets the vcpkg toolchain file for other presets to consume",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+      }
+    },
+    {
+      "name": "win-msvc-x64-dbg",
+      "displayName": "Windows Visual Studio x64 Debug",
+      "description": "Debug build of InfoCLI for x86_64 using Visual Studio on Windows",
+      "inherits": [
+        "local-vcpkg",
+        "win32-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-x64-msvc"
+    },
+    {
+      "name": "win-msvc-x64-rel",
+      "displayName": "Windows Visual Studio x64 Release",
+      "description": "Release build of InfoCLI for x86_64 using Visual Studio on Windows",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "win32-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-x64-msvc"
+    },
+    {
+      "name": "win-clang-x64-rel",
+      "displayName": "LLVM/Clang x64 Release",
+      "description": "Release build of InfoCLI for x86_64 using LLVM/Clang on Windows",
+      "generator": "Visual Studio 17 2022",
+      "toolset": "clangcl",
+      "architecture": "x64",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "win32-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "binaryDir": "${sourceDir}/_build-release-x64-clang",
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "Native/clang"
+        }
+      }
+    },
+    {
+      "name": "win-msvc-arm-dbg",
+      "displayName": "Windows Visual Studio arm Debug",
+      "description": "Debug build of InfoCLI for arm64 using Visual Studio on Windows",
+      "inherits": [
+        "local-vcpkg",
+        "win32-build",
+        "cmake-debug-type"
+      ],
+      "environment": {
+        "VCPKG_DEFAULT_TRIPLET": "arm64-windows"
+      },
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-arm-msvc"
+    },
+    {
+      "name": "win-msvc-arm-rel",
+      "displayName": "Windows Visual Studio arm Release",
+      "description": "Release build of InfoCLI for arm64 using Visual Studio on Windows",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "win32-build",
+        "cmake-release-type"
+      ],
+      "environment": {
+        "VCPKG_DEFAULT_TRIPLET": "arm64-windows"
+      },
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "strategy": "set",
+        "value": "ARM64"
+      },
+      "binaryDir": "${sourceDir}/_build-release-arm-msvc"
+    },
+    {
+      "name": "lnx-gcc-x64-dbg",
+      "displayName": "Linux GCC x64 Debug",
+      "description": "Debug build of InfoCLI for x86_64 using GCC on Linux",
+      "inherits": [
+        "local-vcpkg",
+        "linux-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-x64-gcc"
+    },
+    {
+      "name": "lnx-gcc-x64-rel",
+      "displayName": "Linux GCC x64 Release",
+      "description": "Release build of InfoCLI for x86_64 using GCC on Linux",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "linux-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-x64-gcc"
+    },
+    {
+      "name": "lnx-gcc-arm-dbg",
+      "displayName": "Linux GCC arm Debug",
+      "description": "Debug build of InfoCLI for x86_64 using GCC on Linux",
+      "inherits": [
+        "local-vcpkg",
+        "linux-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-arm-gcc"
+    },
+    {
+      "name": "lnx-gcc-arm-rel",
+      "displayName": "Linux GCC arm Release",
+      "description": "Release build of InfoCLI for x86_64 using GCC on Linux",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "linux-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-arm-gcc"
+    },
+    {
+      "name": "osx-gcc-x64-dbg",
+      "displayName": "OS X GCC x64 Debug",
+      "description": "Debug build of InfoCLI for x86_64 using GCC on OS X",
+      "inherits": [
+        "local-vcpkg",
+        "osx-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-x64-gcc"
+    },
+    {
+      "name": "osx-gcc-x64-rel",
+      "displayName": "OS X GCC x64 Release",
+      "description": "Release build of InfoCLI for x86_64 using GCC on OS X",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "osx-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-x64-gcc"
+    },
+    {
+      "name": "osx-gcc-arm-dbg",
+      "displayName": "OS X GCC arm Debug",
+      "description": "Debug build of InfoCLI for x86_64 using GCC on OS X",
+      "inherits": [
+        "local-vcpkg",
+        "osx-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-arm-gcc"
+    },
+    {
+      "name": "osx-gcc-arm-rel",
+      "displayName": "OS X GCC arm Release",
+      "description": "Release build of InfoCLI for x86_64 using GCC on OS X",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "osx-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-arm-gcc"
+    },
+    {
+      "name": "fbsd-clang-x64-dbg",
+      "displayName": "FreeBSD Clang x64 Debug",
+      "description": "Debug build of InfoCLI for x86_64 using Clang on FreeBSD",
+      "inherits": [
+        "local-vcpkg",
+        "fbsd-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-x64-clang"
+    },
+    {
+      "name": "fbsd-clang-x64-rel",
+      "displayName": "FreeBSD Clang x64 Release",
+      "description": "Release build of InfoCLI for x86_64 using Clang on FreeBSD",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "fbsd-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "x64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-x64-clang"
+    },
+    {
+      "name": "fbsd-clang-arm-dbg",
+      "displayName": "FreeBSD Clang arm Debug",
+      "description": "Debug build of InfoCLI for x86_64 using Clang on FreeBSD",
+      "inherits": [
+        "local-vcpkg",
+        "fbsd-build",
+        "cmake-debug-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-debug-arm-clang"
+    },
+    {
+      "name": "fbsd-clang-arm-rel",
+      "displayName": "FreeBSD Clang arm Release",
+      "description": "Release build of InfoCLI for x86_64 using Clang on FreeBSD",
+      "inherits": [
+        "local-vcpkg",
+        "vcpkg-rel-no-dbg",
+        "fbsd-build",
+        "cmake-release-type"
+      ],
+      "cacheVariables": {
+        "INFO_CLI_SYS_ARCH": "arm64"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_build-release-arm-clang"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "win32-build-pre",
+      "description": "Condition for building on Windows",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-build-pre",
+      "description": "Conditions for building on Linux",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "osx-build-pre",
+      "description": "Conditions for building on OSX",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "fbsd-build-pre",
+      "description": "Conditions for building on FreeBSD",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "FreeBSD"
+      }
+    },
+    {
+      "name": "release-windows-x64",
+      "displayName": "Perform a full Release rebuild of the whole project",
+      "inherits": [
+        "win32-build-pre"
+      ],
+      "configurePreset": "win-msvc-x64-rel",
+      "cleanFirst": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "release-windows-arm64",
+      "displayName": "Perform a full Release rebuild of the whole project (ARM64)",
+      "inherits": [
+        "win32-build-pre"
+      ],
+      "configurePreset": "win-msvc-arm-rel",
+      "cleanFirst": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "release-windows-x64-clang",
+      "displayName": "Perform a full Release rebuild of the whole project using clang-cl",
+      "inherits": [
+        "win32-build-pre"
+      ],
+      "configurePreset": "win-clang-x64-rel",
+      "cleanFirst": true,
+      "configuration": "Release",
+      "jobs": 6,
+      "nativeToolOptions": [
+        "-graph",
+        "/p:CL_MPCount=2"
+      ]
+    },
+    {
+      "name": "release-linux-x64",
+      "displayName": "Perform a full Release rebuild of the whole project",
+      "inherits": [
+        "linux-build-pre"
+      ],
+      "configurePreset": "lnx-gcc-x64-rel",
+      "cleanFirst": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "release-linux-arm",
+      "displayName": "Perform a full Release rebuild of the whole project",
+      "inherits": [
+        "linux-build-pre"
+      ],
+      "configurePreset": "lnx-gcc-arm-rel",
+      "cleanFirst": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "release-osx-x64",
+      "displayName": "Perform a full Release rebuild of the whole project",
+      "inherits": [
+        "osx-build-pre"
+      ],
+      "configurePreset": "osx-gcc-x64-rel",
+      "cleanFirst": true,
+      "configuration": "Release"
+    },
+    {
+      "name": "release-osx-arm",
+      "displayName": "Perform a full Release rebuild of the whole project",
+      "inherits": [
+        "osx-build-pre"
+      ],
+      "configurePreset": "osx-gcc-arm-rel",
+      "cleanFirst": true,
+      "configuration": "Release"
+    }
+  ]
+}

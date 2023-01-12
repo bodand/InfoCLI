@@ -1,0 +1,16 @@
+{
+  "name": "info-cli",
+  "version-semver": "1.8.1",
+  "license": "BSD-3-Clause",
+  "dependencies": [
+    "fmt",
+    "info-utils",
+    "catch2"
+  ],
+  "overrides": [
+    {
+      "name": "catch2",
+      "version": "2.13.1"
+    }
+  ]
+}

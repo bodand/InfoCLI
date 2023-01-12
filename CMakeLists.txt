@@ -106,11 +106,12 @@ target_compile_features(cxx_std INTERFACE
                         "cxx_std_17"
                         )
 
+### Dependencies ###
+find_package(InfoUtils CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
 ### Warnings ###
 include(Warnings)
-
-### Dependencies ###
-include(Dependencies)
 
 ### info::cli ###
 add_library(cli "${INFO_CLI_BUILD_TYPE}"
