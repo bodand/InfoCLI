@@ -7,7 +7,7 @@
     {
       "kind": "git",
       "repository": "https://github.com/bodand/vcpkg-registry",
-      "baseline": "7f173614fcf7508febaa0536996dcd2c7e52dc51\n",
+      "baseline": "7f173614fcf7508febaa0536996dcd2c7e52dc51",
       "packages": [
         "info-utils"
       ]
