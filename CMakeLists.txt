@@ -203,7 +203,7 @@ install(TARGETS cli cli_cxx_std
 
 install(DIRECTORY
         "${CMAKE_CURRENT_SOURCE_DIR}/include/info"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/info"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         FILES_MATCHING PATTERN "*.hxx"
         )
 write_basic_package_version_file(
