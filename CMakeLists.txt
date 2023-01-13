@@ -99,10 +99,10 @@ message(STATUS "[${PROJECT_NAME}] Building ${INFO_CLI_BUILD_TYPE} library")
 
 ### Use C++17 ###
 set(CMAKE_CXX_STANDARD 17)
-add_library(cxx_std INTERFACE)
-add_library(InfoCLI::cxx_std ALIAS cxx_std)
+add_library(cli_cxx_std INTERFACE)
+add_library(InfoCLI::cxx_std ALIAS cli_cxx_std)
 
-target_compile_features(cxx_std INTERFACE
+target_compile_features(cli_cxx_std INTERFACE
                         "cxx_std_17"
                         )
 
@@ -112,6 +112,12 @@ find_package(fmt CONFIG REQUIRED)
 
 ### Warnings ###
 include(Warnings)
+
+## clang-cl support ##
+if ("x${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" STREQUAL "xMSVC")
+    message(STATUS "Injecting /EHsc into clang-cl command-line")
+    add_compile_options(/EHsc)
+endif ()
 
 ### info::cli ###
 add_library(cli "${INFO_CLI_BUILD_TYPE}"
@@ -186,3 +192,38 @@ if (INFO_CLI_BUILD_TESTS)
 
     add_subdirectory(test)
 endif ()
+
+## Install
+install(TARGETS cli cli_cxx_std
+        EXPORT ${PROJECT_NAME}Targets
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+install(DIRECTORY
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/info"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/info"
+        FILES_MATCHING PATTERN "*.hxx"
+        )
+write_basic_package_version_file(
+        ${PROJECT_NAME}ConfigVersion.cmake
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+)
+
+install(EXPORT ${PROJECT_NAME}Targets
+        FILE ${PROJECT_NAME}Targets.cmake
+        NAMESPACE info::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        )
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
+        "${PROJECT_NAME}Config.cmake"
+        @ONLY)
+
+install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        )

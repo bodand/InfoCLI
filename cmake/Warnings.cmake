@@ -70,10 +70,10 @@ set(_INFO_CLI_POSSIBLE_WARNINGS
     ${INFO_CLI_EXTRA_WARNINGS}
     )
 
-add_library(Warnings INTERFACE)
-add_library(InfoCLI::Warnings ALIAS Warnings)
+add_library(cliWarnings INTERFACE)
+add_library(InfoCLI::Warnings ALIAS cliWarnings)
 
-target_compile_options(Warnings INTERFACE
+target_compile_options(cliWarnings INTERFACE
                        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall>
                        )
 
@@ -86,11 +86,11 @@ foreach (warn IN LISTS _INFO_CLI_POSSIBLE_WARNINGS)
         else ()
             set(WarningPrefix "-W")
         endif ()
-        target_compile_options(Warnings INTERFACE "${WarningPrefix}${warn}")
+        target_compile_options(cliWarnings INTERFACE "${WarningPrefix}${warn}")
     endif ()
 endforeach ()
 
 ## Install targets
-install(TARGETS Warnings
-        EXPORT InfoCLI_Targets
+install(TARGETS cliWarnings
+        EXPORT InfoCLITargets
         )
